@@ -4,8 +4,8 @@ Server::Server( const std::string & port, const std::string & password ) : _port
 
 Server::~Server( void ) {}
 
-void Server::generate_socket( void ) {
-
+void Server::generate_socket( void )
+{
 	if ((_sockfd = socket(PF_INET, SOCK_STREAM, 0)) < 0)
 		throw std::runtime_error("Error while generating socket\n");
 
@@ -24,10 +24,12 @@ void Server::generate_socket( void ) {
 
 	if (listen(_sockfd, 1000) < 0)
 		throw std::runtime_error("Error while listening on socket\n");
-	
+
+	std::cout << "Server socket generated\n";	
 }
 
-void Server::launch( void ) {
+void Server::launch( void )
+{
 
 	generate_socket();
 	
@@ -38,7 +40,8 @@ void Server::launch( void ) {
 	struct epoll_event event;
 	event.events = EPOLLIN;
 	event.data.fd = _sockfd;
-	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, event.data.fd, &event)) {
+	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, event.data.fd, &event))
+	{
 		close(epoll_fd);
 		throw std::runtime_error("Error while adding file descriptor to epoll\n");
 	}
@@ -48,10 +51,13 @@ void Server::launch( void ) {
 	char buffer[BUFFER_SIZE + 1];
 	int bytes_read;
 	struct epoll_event events[MAX_EVENTS];
-	while (running) {
+	while (running)
+	{
 		event_count = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
-		for (int i = 0; i < event_count; i++) {
-			std::cout << "connection received" << std::endl;
+		std::cout << "Event_count = " << event_count << std::endl;
+		for (int i = 0; i < event_count; i++)
+		{
+			std::cout << "connection received, i = " << i << std::endl;
 			if (events[i].data.fd == _sockfd)
 			{
 				int connect;
