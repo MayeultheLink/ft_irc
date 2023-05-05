@@ -44,8 +44,7 @@ class Server {
 		const std::string _port;
 		const std::string _password;
 		int _sockfd;
-		using func = void (Server::*)(ClientInfo *, std::vector<std::string>);
-		std::map<std::string, func> _cmdsMap;
+		std::map<std::string, void (Server::*)(ClientInfo *, std::vector<std::string>)> _cmdsMap;
 		std::map<int, ClientInfo *> _clientsMap;
 
 		void parseMsg(ClientInfo *client, std::string message);

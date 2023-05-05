@@ -6,7 +6,7 @@ SRCS		=	srcs/main.cpp \
 #			srcs/Channel.cpp \
 
 CC		=	c++
-CFLAGS		=	-Wall -Wextra -Werror -I./incs #-std=c++98
+CFLAGS		=	-Wall -Wextra -Werror -I./incs -std=c++98
 OBJS		=	${SRCS:.cpp=.o}
 DEPS		=	${OBJS:.o=.d}
 
