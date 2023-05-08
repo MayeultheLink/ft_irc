@@ -1,13 +1,36 @@
 #include "Server.hpp"
 
+bool running;
+
 Server::Server( const std::string & port, const std::string & password ) : _port(port), _password(password)
 {
 	_cmdsMap["CAP"] = & Server::CmdCap;
 	_cmdsMap["NICK"] = & Server::CmdNick;
 	_cmdsMap["USER"] = & Server::CmdUser;
+
+	running = true;
 }
 
-Server::~Server( void ) {}
+Server::~Server( void )
+{
+	if (_clientsMap.size())
+	{
+		for (std::map<int, ClientInfo *>::iterator it = _clientsMap.begin(); it != _clientsMap.end(); ++it)
+		{
+			close(it->first);
+			delete it->second;
+		}
+		_clientsMap.clear();
+	}
+}
+
+void handleSignal(int sigint)
+{
+	std::cout << std::endl;
+	std::cout << "Exiting server..." << std::endl;
+	if (sigint == SIGINT)
+		running = false;
+}
 
 void Server::generate_socket( void )
 {
@@ -38,6 +61,9 @@ void Server::generate_socket( void )
 void Server::launch( void )
 {
 std::cout << "START\n";
+
+	signal(SIGINT, &handleSignal);
+
 	generate_socket();
 	
 	int epoll_fd = epoll_create1(0);
@@ -52,7 +78,6 @@ std::cout << "START\n";
 		throw std::runtime_error("Error while adding file descriptor to epoll\n");
 	}
 
-	int running = 1;
 	int event_count;
 	// char buffer[BUFFER_SIZE + 1];
 	// int bytes_read;
@@ -62,6 +87,8 @@ std::cout << "START\n";
 	{
 std::cout << "entering running loop\n" << std::endl;
 		event_count = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
+		if (!running)
+			break;
 std::cout << "passed epoll_wait\n" << std::endl;
 		for (int i = 0; i < event_count; i++)
 		{

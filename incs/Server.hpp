@@ -14,6 +14,7 @@
 #include <stdexcept>
 #include <cerrno>
 #include <netdb.h>
+#include <signal.h>
 
 #include <map>
 #include <vector>
@@ -27,6 +28,8 @@
 // void CmdCap(Server *server, ClientInfo *client, std::vector<std::string> arg);
 // void CmdNick(Server *server, ClientInfo *client, std::vector<std::string> arg);
 // void CmdUser(Server *server, ClientInfo *client, std::vector<std::string> arg);
+
+extern bool running;
 
 size_t getMsgFromFd(int fd, std::string * message);
 
