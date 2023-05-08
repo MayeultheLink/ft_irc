@@ -1,7 +1,7 @@
 #include "ClientInfo.hpp"
 
 ClientInfo::ClientInfo(const std::string &hostname, int fd, int port)
-	: _hostname(hostname), _fd(fd), _port(port)/*, _realname(""), _username(""), _nickname(""), _password(""), _modes(""), _isoperator(0), _isregistered(0), _Cchannels()*/  
+	: _hostname(hostname), _fd(fd), _port(port), _realname(""), _username(""), _nickname(""),/* _password(""), _modes(""), _isoperator(0),*/ _isregistered(0)/*, _Cchannels()*/  
 {
 	if (_hostname.size() > 63)
 	{

@@ -54,20 +54,21 @@ std::cout << "START\n";
 
 	int running = 1;
 	int event_count;
-	char buffer[BUFFER_SIZE + 1];
-	int bytes_read;
+	// char buffer[BUFFER_SIZE + 1];
+	// int bytes_read;
 	struct epoll_event events[MAX_EVENTS];
 	
 	while (running) 
 	{
-		std::cout << "entering running loop\n" << std::endl;
+std::cout << "entering running loop\n" << std::endl;
 		event_count = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
-		std::cout << "passed epoll_wait\n" << std::endl;
-		for (int i = 0; i < event_count; i++) {
-			std::cout << "entering for loop\n" << std::endl;
+std::cout << "passed epoll_wait\n" << std::endl;
+		for (int i = 0; i < event_count; i++)
+		{
+std::cout << "entering for loop\n" << std::endl;
 			if (events[i].data.fd == _sockfd)
 			{
-				std::cout << "new client trying to connect\n" << std::endl;
+std::cout << "new client trying to connect\n" << std::endl;
 				int connect_fd;
 				sockaddr_in connect_sock = {AF_INET, 0, {0}, {0}};
 				socklen_t size = sizeof connect_sock;
@@ -82,22 +83,66 @@ std::cout << "START\n";
 				event.events = EPOLLIN;
 				if (!epoll_ctl(epoll_fd, EPOLL_CTL_ADD, connect_fd, &event))
 				{
-					std::cout << "ClientInfo n " << event.data.fd << " connected" << std::endl;
+std::cout << "ClientInfo n " << event.data.fd << " connected" << std::endl;
 					newClientConnect(connect_sock, connect_fd);	
 					break ;
 				}
 			}
+			// else
+			// {
+			// 	printf("entering else condition\n");
+			// 	bytes_read = recv(events[i].data.fd, buffer, BUFFER_SIZE, 0);
+			// 	buffer[bytes_read] = 0;
+			// 	std::string cast(buffer);
+			// 	std::cout << cast << std::endl;
+			// 	//send(_sockfd, buffer, strlen(buffer), 0);
+			// 	//write(1, "\n", 1);
+			// 	//printf("%s\n", buffer);
+			// //	running = 0;
+			// }
 			else
 			{
-				printf("entering else condition\n");
-				bytes_read = recv(events[i].data.fd, buffer, BUFFER_SIZE, 0);
-				buffer[bytes_read] = 0;
-				std::string cast(buffer);
-				std::cout << cast << std::endl;
-				//send(_sockfd, buffer, strlen(buffer), 0);
-				//write(1, "\n", 1);
-				//printf("%s\n", buffer);
-			//	running = 0;
+std::cout << "other fd communication" << std::endl;
+
+				std::string message;
+				int r = getMsgFromFd(events[i].data.fd, &message);
+std::cout << "message received = '" << message << "'" << std::endl;
+std::cout << "r = " << r << std::endl;
+				if (r < 0)
+				{
+					perror("Error while receiving data.");
+					break;
+				}
+				else if (r == 0)
+				{
+					clientDisconnect(events[i].data.fd, epoll_fd);
+					continue;
+				}
+				else
+					execMsg(_clientsMap[events[i].data.fd], message);
+
+
+					// if (errno != EWOULDBLOCK)
+						//throw std::runtime_error("Error while receiving message from client.");	
+				// int fd = events[i].data.fd;
+				// char buffer[1024];
+				// bzero(buffer, 1024);
+				// ssize_t n = recv(fd, buffer, sizeof buffer, 0);
+				// if(n == -1)
+				// {
+				// 	perror("Error while receiving data.");
+				// 	break;
+				// }
+				// else if(n == 0)
+				// {
+				// 	onClientDisconnect(fd, epoll_fd);
+				// 	continue;
+				// }
+				// else
+				// {
+				// 	onClientMessage(fd, buffer, n);
+				// 	//break;
+				// }
 			}
 		}
 	}
@@ -105,6 +150,29 @@ std::cout << "START\n";
 	if (close(epoll_fd))
 		throw std::runtime_error("Failed to close file descriptor");
 	
+}
+
+size_t getMsgFromFd(int fd, std::string * message)
+{
+	// std:: string message;
+	char tmp[100] = {0};
+	int r;
+	while (message->find("\r\n") == std::string::npos)
+	{
+		r = recv(fd, tmp, 100, 0);
+		if (r < 0)
+		{
+			if (errno != EWOULDBLOCK)
+				throw std::runtime_error("Error while receiving message from client.");			
+		}
+		if (r == 0)
+			return r;
+			
+		message->append(tmp, r);
+
+	}
+
+	return r;
 }
 
 void	Server::newClientConnect (sockaddr_in connect_sock, int connect_fd)
@@ -115,7 +183,7 @@ void	Server::newClientConnect (sockaddr_in connect_sock, int connect_fd)
 
 	std::cout << "CLIENT CONNECT: hostname = " << hostname << std::endl;
 
-	(void) connect_fd;
+	// (void) connect_fd;
 
 	ClientInfo *client = new ClientInfo(hostname, connect_fd, ntohs(connect_sock.sin_port));
 	std::cout << hostname << ":" << ntohs(connect_sock.sin_port) << " has connected." << std::endl << std::endl;
@@ -134,18 +202,17 @@ void	Server::newClientConnect (sockaddr_in connect_sock, int connect_fd)
 		}
 		message.append(tmp, r);
 	}
-	std::cout << "message = " << message << std::endl;
+std::cout << "message = " << message << std::endl;
 
-	parseMsg(client, message);
+	execMsg(client, message);
 	// if (_errorpass == 0)
 	// {
-	// 	client->setRegistered(1);
-	// 	client->reply(RPL_WELCOME(client->getNickname()));
-	// 	std::cout << "password: " << client->getPassword() << std::endl;
-	// 	std::cout << "nickname: " << client->getNickname() << std::endl;
-	// 	std::cout << "username: " << client->getUsername() << std::endl;
-	// 	std::cout << "realname: " << client->getRealname() << std::endl;
-	// 	std::cout << RESET;
+		// client->setRegistered(1);
+		client->reply(RPL_WELCOME(client->getNickname()));
+		// std::cout << "password: " << client->getPassword() << std::endl;
+std::cout << "newco nickname: " << client->getNickname() << std::endl;
+std::cout << "newco username: " << client->getUsername() << std::endl;
+std::cout << "newco realname: " << client->getRealname() << std::endl;
 	// }
 	// else
 	// {
@@ -155,8 +222,40 @@ void	Server::newClientConnect (sockaddr_in connect_sock, int connect_fd)
 	// }
 }
 
-void	Server::parseMsg(ClientInfo *client, std::string message)
+// void	Server::clientMessage(int fd, char *tmp, size_t r)
+// {
+// 	try
+// 	{
+// 		std::string message = recvMessage(fd, tmp, r);
+// 		std::cout << RED << "\nmessage = " << message << RESET;
+// 		Client	*client = _clients.at(fd);
+// 		_commandHandler->recup_msg(client, message);
+// 	}
+// 	catch(const std::exception& e)
+// 	{
+// 		std::cerr << e.what() << '\n';
+// 	}
+// }
+
+void		Server::clientDisconnect(int fd, int epoll_fd)
 {
+std::cout << "CLIENT DISCONNECT" << std::endl;
+
+	// Remove the client from the epoll instance (flag EPOLL_CTL_DEL)
+	epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, 0);
+	// Close the socket for this client
+	std::cout << "Client n°" << fd << " va se déconnecter." << std::endl;
+	delete _clientsMap.at(fd);
+	_clientsMap.erase(fd);
+	close(fd);
+	// Log the client disconnection
+	std::cout << "Client n°" << fd << " s'est déconnecté." << std::endl;
+}
+
+void	Server::execMsg(ClientInfo *client, std::string message)
+{
+std::cout << "EXEC MSG" << std::endl;
+
 	std::stringstream	ssMsg(message);
 	std::string			msg_parse;
 
@@ -179,8 +278,8 @@ void	Server::parseMsg(ClientInfo *client, std::string message)
 			{
 				arguments.push_back(buf);
 			}
-
-			((this->*_cmdsMap[cde_name]))(client, arguments);
+			if (_cmdsMap.find(cde_name) != _cmdsMap.end())
+				((this->*_cmdsMap[cde_name]))(client, arguments);
 			// command->execute(client, arguments);
 		}
 		catch (const std::out_of_range &e)
@@ -190,7 +289,7 @@ void	Server::parseMsg(ClientInfo *client, std::string message)
 	}
 }
 
-ClientInfo*		Server::getClient(const std::string &nickname)
+ClientInfo*		Server::getClientByNick(const std::string &nickname)
 {
 	for (std::map<int, ClientInfo *>::iterator it = _clientsMap.begin(); it != _clientsMap.end(); it++)
 	{
@@ -274,7 +373,7 @@ std::cout << "COMMAND : NICK" << std::endl;
 		if (nickname == it.operator*().second->getNickname())
 				nickname.push_back('_');
 	}
-	if (getClient(nickname))
+	if (getClientByNick(nickname))
 	{
 		client->reply(ERR_NICKNAMEINUSE(client->getNickname()));
 		return;
@@ -292,6 +391,15 @@ std::cout << "COMMAND : NICK" << std::endl;
 void Server::CmdUser(ClientInfo *client, std::vector<std::string> arg)
 {
 std::cout << "COMMAND : USER" << std::endl;
+
+		for (std::vector<std::string>::iterator it = arg.begin(); it != arg.end(); ++it)
+		{
+			std::cout << "boucle vector : " << *it << std::endl;
+		}
+
+
+
+
 	int param_size = arg.size();
 	if (param_size < 3)
 	{
@@ -318,160 +426,32 @@ std::cout << "COMMAND : USER" << std::endl;
 		client->setUsername(username);
 		for (std::vector<std::string>::iterator it = arg.begin(); it != arg.end(); ++it) 
 		{
-			std::string tosend; 
-			tosend = (*it); 
+			// std::string tosend; 
+			// tosend = (*it); 
+			// message.append(" ");
+			// message.append(tosend);
+
 			message.append(" ");
-			message.append(tosend);
+			message.append(*it);
 		}
 		message.append("\t\n");
-		std::cout << message << std::endl;
+std::cout << message << std::endl;
 		size_t start;
 		size_t end;
 		start = message.find(":");
 		if(message.find(":") == std::string::npos)
 		{
 			realname = arg[2];
-			std::cout << start << std::endl;
+std::cout << "USER Cmd start var = " << start << std::endl;
 		}
 		else
 		{
 			end = message.find_first_of("\t\n", start);
 			realname = message.substr(start + 1, end - start -1);
 		}
+std::cout << "USER Cmd Realname found = " << realname << std::endl;
 		client->setRealname(realname);
 		client->setRegistered(1);
 	}
 
 }
-
-/*TEST*/
-
-// void CmdCap(Server *server, ClientInfo *client, std::vector<std::string> arg)
-// {
-// std::cout << "COMMAND : CAP" << std::endl;
-// 	(void)client;
-// 	(void)arg;
-// 	return;
-// }
-
-// bool checkNickInvalid(std::string nickname)
-// {
-// 	int i = 0;
-// 	int length = nickname.length();
-
-// 	//La taille du nick ne doit pas depasser 9 idealement
-// 	if (length > 9)
-// 	{
-// 		std::cout << "NICK Error: Nickname is too big (>9)" << std::endl;
-// 		return (false);
-// 	}
-// 	while (i < length)
-// 	{
-// 		if (!std::strchr(NICK_VALID_CHARS, nickname[i]))
-// 		{
-// 			std::cout << "NICK Error: Found special characters" << std::endl;
-// 			return (false);
-// 		}
-// 		i++;
-// 	}
-// 	if (!isalpha(nickname[0]))
-// 	{
-// 		std::cout << "NICK Error: The nickname does not start with an alpha" << std::endl;
-// 		return (false);
-// 	}
-// 	return true;
-// }
-
-// // syntax : /nick <new nick> -> 1 paramètre obligatoire !
-// void CmdNick(Server *server, ClientInfo *client, std::vector<std::string> arg)
-// {
-// std::cout << "COMMAND : NICK" << std::endl;
-// 	if (arg.size() < 1)
-// 	{
-// 		client->reply(ERR_NONICKNAMEGIVEN(client->getNickname(), "NICK"));
-// 		return;
-// 	}
-
-// 	std::string reply = client->getNickname();
-// 	std::string nickname = arg[0];
-// 	if (checkNickInvalid(nickname) == false)
-// 	{
-// 		client->reply(ERR_ERRONEUSNICKNAME(client->getNickname()));
-// 		return;
-// 	}
-// 	// std::map<int, ClientInfo *> _clientsMap = getClients();
-
-// 	for (std::map<int, ClientInfo *>::iterator it = _clientsMap.begin(); it != _clientsMap.end(); it++)
-// 	{
-// 		if (nickname == it.operator*().second->getNickname())
-// 				nickname.push_back('_');
-// 	}
-// 	if (getClient(nickname))
-// 	{
-// 		client->reply(ERR_NICKNAMEINUSE(client->getNickname()));
-// 		return;
-// 	}
-// 	std::string oldNick = client->getNickname();
-// 	std::string newNick = nickname;
-// 	client->setNickname(nickname);
-// 	reply.append(" changed his nickname to ");
-// 	reply.append(client->getNickname()); 
-// 	client->reply_command(reply);
-// 	client->reply_command(RPL_NICK(oldNick, newNick));
-
-// }
-
-// void CmdUser(Server *server, ClientInfo *client, std::vector<std::string> arg)
-// {
-// std::cout << "COMMAND : USER" << std::endl;
-// 	int param_size = arg.size();
-// 	if (param_size < 3)
-// 	{
-// 		client->reply(ERR_NEEDMOREPARAMS(client->getNickname(), "USER"));
-// 		return;
-// 	}
-// 	else if (client->getRegistered() == 1)
-// 	{
-// 		client->reply(ERR_ALREADYREGISTERED(client->getNickname()));
-// 		return;
-// 	}
-// 	// else if (client->getPassword() != _server->getPassword())
-// 	// {
-// 	// 	client->reply(ERR_PASSWDMISMATCH(client->getNickname()));
-// 	// 	//_server->onClientDisconnect(client->getFd(), _server->getEpollfd());
-// 	// 	_server->setErrorPass(1);
-// 	// 	return;
-// 	// }
-// 	else
-// 	{
-// 		std::string message;
-// 		std::string realname;
-// 		std::string username = arg[0];
-// 		client->setUsername(username);
-// 		for (std::vector<std::string>::iterator it = arg.begin(); it != arg.end(); ++it) 
-// 		{
-// 			std::string tosend; 
-// 			tosend = (*it); 
-// 			message.append(" ");
-// 			message.append(tosend);
-// 		}
-// 		message.append("\t\n");
-// 		std::cout << message << std::endl;
-// 		size_t start;
-// 		size_t end;
-// 		start = message.find(":");
-// 		if(message.find(":") == std::string::npos)
-// 		{
-// 			realname = arg[2];
-// 			std::cout << start << std::cout;
-// 		}
-// 		else
-// 		{
-// 			end = message.find_first_of("\t\n", start);
-// 			realname = message.substr(start + 1, end - start -1);
-// 		}
-// 		client->setRealname(realname);
-// 		client->setRegistered(1);
-// 	}
-
-// }

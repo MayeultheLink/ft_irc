@@ -28,6 +28,8 @@
 // void CmdNick(Server *server, ClientInfo *client, std::vector<std::string> arg);
 // void CmdUser(Server *server, ClientInfo *client, std::vector<std::string> arg);
 
+size_t getMsgFromFd(int fd, std::string * message);
+
 class Server {
 
 	public :
@@ -36,8 +38,7 @@ class Server {
 		~Server( void );
 
 		void launch( void );
-		void generate_socket( void );
-		void newClientConnect (sockaddr_in connect_sock, int connect_fd);
+
 
 	private :
 
@@ -47,8 +48,16 @@ class Server {
 		std::map<std::string, void (Server::*)(ClientInfo *, std::vector<std::string>)> _cmdsMap;
 		std::map<int, ClientInfo *> _clientsMap;
 
-		void parseMsg(ClientInfo *client, std::string message);
-		ClientInfo*	getClient(const std::string &nickname);
+		void execMsg(ClientInfo *client, std::string message);
+		ClientInfo*	getClientByNick(const std::string &nickname);
+
+
+		void generate_socket( void );
+
+		void newClientConnect (sockaddr_in connect_sock, int connect_fd);
+		void clientMessage(int fd, char *tmp, size_t r);
+		void clientDisconnect(int fd, int epoll_fd);
+
 
 		void CmdCap(ClientInfo *client, std::vector<std::string> arg);
 		void CmdNick(ClientInfo *client, std::vector<std::string> arg);
