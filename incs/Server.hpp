@@ -65,6 +65,7 @@ class Server {
 		void CmdCap(ClientInfo *client, std::vector<std::string> arg);
 		void CmdNick(ClientInfo *client, std::vector<std::string> arg);
 		void CmdUser(ClientInfo *client, std::vector<std::string> arg);
+		void CmdQuit(ClientInfo *client, std::vector<std::string> arg);
 
 };
 

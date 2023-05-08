@@ -7,6 +7,7 @@ Server::Server( const std::string & port, const std::string & password ) : _port
 	_cmdsMap["CAP"] = & Server::CmdCap;
 	_cmdsMap["NICK"] = & Server::CmdNick;
 	_cmdsMap["USER"] = & Server::CmdUser;
+	_cmdsMap["QUIT"] = & Server::CmdQuit;
 
 	running = true;
 }
@@ -481,4 +482,24 @@ std::cout << "USER Cmd Realname found = " << realname << std::endl;
 		client->setRegistered(1);
 	}
 
+}
+
+void Server::CmdQuit(ClientInfo *client, std::vector<std::string> arg)
+{
+	std::string	message;
+	if (arg.empty())
+		message = "leaving";
+	else
+		message = (arg.at(0)).substr(1);
+	client->reply(RPL_QUIT(client->getPrefix(), message));
+//	std::vector<Channel *>	channels_userkill;
+//	channels_userkill = client->getChannel();
+//	for (std::vector<Channel *>::iterator it = channels_userkill.begin(); it != channels_userkill.end(); it++)
+//	{
+//		client->leave_channel((*it), leave, 1);
+//		if ((*it)->getNbclients() == 0)
+//			_server->destroyChannel(*it);
+//	}
+
+	//_server->~Server();
 }
