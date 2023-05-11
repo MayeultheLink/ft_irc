@@ -8,6 +8,7 @@ Server::Server( const std::string & port, const std::string & password ) : _port
 	_cmdsMap["CAP"] = & Server::CmdCap;
 	_cmdsMap["NICK"] = & Server::CmdNick;
 	_cmdsMap["USER"] = & Server::CmdUser;
+	_cmdsMap["PING"] = & Server::CmdPing;
 	_cmdsMap["QUIT"] = & Server::CmdQuit;
 
 	running = true;
@@ -511,6 +512,7 @@ std::cout << "COMMAND : QUIT" << std::endl;
 
 void Server::CmdPassword(ClientInfo *client, std::vector<std::string> arg)
 {
+std::cout << "COMMAND : PASS" << std::endl;
 	int param_size = arg.size();
 	if (param_size < 1)
 	{
@@ -537,4 +539,11 @@ void Server::CmdPassword(ClientInfo *client, std::vector<std::string> arg)
 //		_server->setErrorPass(1);
 //		return;
 //	}
+}
+
+void Server::CmdPing(ClientInfo *client, std::vector<std::string> arg)
+{
+std::cout << "COMMAND : PING" << std::endl;
+	std::string message = arg.at(0);
+	client->reply_command(RPL_PING(client->getPrefix(), message));
 }

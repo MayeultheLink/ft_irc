@@ -68,6 +68,7 @@ class Server {
 		void CmdUser(ClientInfo *client, std::vector<std::string> arg);
 		void CmdQuit(ClientInfo *client, std::vector<std::string> arg);
 		void CmdPassword(ClientInfo *client, std::vector<std::string> arg);
+		void CmdPing(ClientInfo *client, std::vector<std::string> arg);
 
 };
 
