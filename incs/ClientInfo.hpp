@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ClientInfoInfo.hpp                                     :+:      :+:    :+:   */
+/*   ClientInfo.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: mde-la-s <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/05 15:25:44 by mde-la-s          #+#    #+#             */
-/*   Updated: 2023/05/05 15:32:15 by mde-la-s         ###   ########.fr       */
+/*   Updated: 2023/05/11 18:45:42 by mde-la-s         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,7 @@ class ClientInfo
 		std::string			getRealname() const;
 		std::string			getUsername() const;
 		std::string			getNickname() const;
-		// std::string			getPassword() const;
+		std::string			getPassword() const;
 		// std::string			getModes() const;
 		// bool				getOperator() const;
 		bool				getRegistered() const;
@@ -42,7 +42,7 @@ class ClientInfo
 		void				setRealname(const std::string &realname);
 		void				setUsername(const std::string &username);
 		void				setNickname(const std::string &nickname);
-		// void				setPassword(const std::string &password);
+		void				setPassword(const std::string &password);
 		// void				setModes(const std::string &modes);
 		// void				setOperator(const bool &isoperator);
 		void				setRegistered(const bool &isregistered);
@@ -63,7 +63,7 @@ class ClientInfo
 		std::string				_realname;
 		std::string				_username;
 		std::string				_nickname;
-		// std::string				_password;
+		std::string				_password;
 		// std::string 			_modes;
 		// bool					_isoperator;
 		bool					_isregistered;

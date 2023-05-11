@@ -4,6 +4,7 @@ bool running;
 
 Server::Server( const std::string & port, const std::string & password ) : _port(port), _password(password)
 {
+	_cmdsMap["PASS"] = & Server::CmdPassword;
 	_cmdsMap["CAP"] = & Server::CmdCap;
 	_cmdsMap["NICK"] = & Server::CmdNick;
 	_cmdsMap["USER"] = & Server::CmdUser;
@@ -67,7 +68,7 @@ std::cout << "START\n";
 
 	generate_socket();
 	
-	int epoll_fd = epoll_create1(0);
+	epoll_fd = epoll_create1(0);
 	if (epoll_fd < 0)
 		throw std::runtime_error("Error while creating epoll file descriptor\n");
 
@@ -90,7 +91,7 @@ std::cout << "entering running loop\n" << std::endl;
 		event_count = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
 		if (!running)
 			break;
-std::cout << "passed epoll_wait\n" << std::endl;
+std::cout << "passed epoll_wait and event_count = " << event_count << std::endl;
 		for (int i = 0; i < event_count; i++)
 		{
 std::cout << "entering for loop\n" << std::endl;
@@ -219,24 +220,26 @@ void	Server::newClientConnect (sockaddr_in connect_sock, int connect_fd)
 	_clientsMap[connect_fd] = client;
 
 	std:: string message;
-	char tmp[100] = {0};
-	while (message.find("\r\n") == std::string::npos)
-	{
-		int r = recv(connect_fd, tmp, 100, 0);
-		if (r < 0)
-		{
-			if (errno != EWOULDBLOCK)
-				throw std::runtime_error("Error while receiving message from client.");			
-		}
-		message.append(tmp, r);
-	}
+	getMsgFromFd(connect_fd, &message);
+//	char tmp[100] = {0};
+//	while (message.find("\r\n") == std::string::npos)
+//	{
+//		int r = recv(connect_fd, tmp, 100, 0);
+//		if (r < 0)
+//		{
+//			if (errno != EWOULDBLOCK)
+//				throw std::runtime_error("Error while receiving message from client.");			
+//		}
+//		message.append(tmp, r);
+//	}
 std::cout << "message = " << message << std::endl;
 
 	execMsg(client, message);
+
 	// if (_errorpass == 0)
 	// {
 		// client->setRegistered(1);
-		client->reply(RPL_WELCOME(client->getNickname()));
+//	client->reply(RPL_WELCOME(client->getNickname()));
 		// std::cout << "password: " << client->getPassword() << std::endl;
 std::cout << "newco nickname: " << client->getNickname() << std::endl;
 std::cout << "newco username: " << client->getUsername() << std::endl;
@@ -282,7 +285,7 @@ std::cout << "CLIENT DISCONNECT" << std::endl;
 
 void	Server::execMsg(ClientInfo *client, std::string message)
 {
-std::cout << "EXEC MSG" << std::endl;
+std::cout << "EXEC MSG : " << message << std::endl;
 
 	std::stringstream	ssMsg(message);
 	std::string			msg_parse;
@@ -293,26 +296,26 @@ std::cout << "EXEC MSG" << std::endl;
 		if (msg_parse[len - 1] == '\r')
 			msg_parse = msg_parse.substr(0, len - 1);
 
-		std::string cde_name = msg_parse.substr(0, msg_parse.find(' '));
+		std::string cmd_name = msg_parse.substr(0, msg_parse.find(' '));
 		try
 		{
-			// Command 					*command = _commands.at(cde_name);
+			// Command 					*command = _commands.at(cmd_name);
 			std::vector<std::string>	arguments;
 			std::string 				buf;
-			std::stringstream 			ssArg(msg_parse.substr(cde_name.length(), msg_parse.length()));
+			std::stringstream 			ssArg(msg_parse.substr(cmd_name.length(), msg_parse.length()));
 
 			buf.clear();
 			while (ssArg >> buf)
 			{
 				arguments.push_back(buf);
 			}
-			if (_cmdsMap.find(cde_name) != _cmdsMap.end())
-				((this->*_cmdsMap[cde_name]))(client, arguments);
+			if (_cmdsMap.find(cmd_name) != _cmdsMap.end())
+				((this->*_cmdsMap[cmd_name]))(client, arguments);
 			// command->execute(client, arguments);
 		}
 		catch (const std::out_of_range &e)
 		{
-			client->reply(ERR_UNKNOWNCOMMAND(client->getNickname(), cde_name));
+			client->reply(ERR_UNKNOWNCOMMAND(client->getNickname(), cmd_name));
 		}
 	}
 }
@@ -439,13 +442,13 @@ std::cout << "COMMAND : USER" << std::endl;
 		client->reply(ERR_ALREADYREGISTERED(client->getNickname()));
 		return;
 	}
-	// else if (client->getPassword() != _server->getPassword())
-	// {
-	// 	client->reply(ERR_PASSWDMISMATCH(client->getNickname()));
-	// 	//_server->onClientDisconnect(client->getFd(), _server->getEpollfd());
+	else if (client->getPassword() != _password)
+	{
+		client->reply(ERR_PASSWDMISMATCH(client->getNickname()));
+		clientDisconnect(client->getFd(), epoll_fd);
 	// 	_server->setErrorPass(1);
-	// 	return;
-	// }
+		return;
+	}
 	else
 	{
 		std::string message;
@@ -480,18 +483,20 @@ std::cout << "USER Cmd start var = " << start << std::endl;
 std::cout << "USER Cmd Realname found = " << realname << std::endl;
 		client->setRealname(realname);
 		client->setRegistered(1);
+		client->reply(RPL_WELCOME(client->getNickname()));
 	}
-
 }
 
 void Server::CmdQuit(ClientInfo *client, std::vector<std::string> arg)
 {
+std::cout << "COMMAND : QUIT" << std::endl;
 	std::string	message;
 	if (arg.empty())
 		message = "leaving";
 	else
 		message = (arg.at(0)).substr(1);
 	client->reply(RPL_QUIT(client->getPrefix(), message));
+	clientDisconnect(client->getFd(), epoll_fd);
 //	std::vector<Channel *>	channels_userkill;
 //	channels_userkill = client->getChannel();
 //	for (std::vector<Channel *>::iterator it = channels_userkill.begin(); it != channels_userkill.end(); it++)
@@ -502,4 +507,34 @@ void Server::CmdQuit(ClientInfo *client, std::vector<std::string> arg)
 //	}
 
 	//_server->~Server();
+}
+
+void Server::CmdPassword(ClientInfo *client, std::vector<std::string> arg)
+{
+	int param_size = arg.size();
+	if (param_size < 1)
+	{
+		client->reply(ERR_NEEDMOREPARAMS(client->getNickname(), "Pass"));
+		return;
+	}
+	else if (client->getRegistered() == 1)
+	{
+		client->reply(ERR_ALREADYREGISTERED(client->getNickname()));
+		return;
+	}
+	else
+	{
+	//	std::cout << RED << "ATTENTION: on est dans PassCommand, on set le password avant l'enregistrement!" << RESET << std::endl;
+		//cette partie à utiliser si on enlève le parsing du début
+		std::string Pass = arg[0];
+	//	std::cout << Pass << std::endl;
+		client->setPassword(Pass);
+	}
+//	if (client->getPassword() != "" && client->getPassword() != _server->getPassword())
+//	{
+//		client->reply(ERR_PASSWDMISMATCH(client->getNickname()));
+//		//_server->onClientDisconnect(client->getFd(), _server->getEpollfd());
+//		_server->setErrorPass(1);
+//		return;
+//	}
 }

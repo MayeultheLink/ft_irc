@@ -48,6 +48,7 @@ class Server {
 		const std::string _port;
 		const std::string _password;
 		int _sockfd;
+		int epoll_fd;
 		std::map<std::string, void (Server::*)(ClientInfo *, std::vector<std::string>)> _cmdsMap;
 		std::map<int, ClientInfo *> _clientsMap;
 
@@ -66,6 +67,7 @@ class Server {
 		void CmdNick(ClientInfo *client, std::vector<std::string> arg);
 		void CmdUser(ClientInfo *client, std::vector<std::string> arg);
 		void CmdQuit(ClientInfo *client, std::vector<std::string> arg);
+		void CmdPassword(ClientInfo *client, std::vector<std::string> arg);
 
 };
 

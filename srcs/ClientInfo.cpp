@@ -1,7 +1,7 @@
 #include "ClientInfo.hpp"
 
 ClientInfo::ClientInfo(const std::string &hostname, int fd, int port)
-	: _hostname(hostname), _fd(fd), _port(port), _realname(""), _username(""), _nickname(""),/* _password(""), _modes(""), _isoperator(0),*/ _isregistered(0)/*, _Cchannels()*/  
+	: _hostname(hostname), _fd(fd), _port(port), _realname(""), _username(""), _nickname(""), _password(""),/* _modes(""), _isoperator(0),*/ _isregistered(0)/*, _Cchannels()*/  
 {
 	if (_hostname.size() > 63)
 	{
@@ -28,7 +28,7 @@ int				ClientInfo::getPort() const			{return(_port);}
 std::string		ClientInfo::getRealname() const		{return(this->_realname);}
 std::string		ClientInfo::getUsername() const		{return(this->_username);}
 std::string		ClientInfo::getNickname() const		{return(this->_nickname);}
-// std::string		ClientInfo::getPassword() const		{return(this->_password);}
+std::string		ClientInfo::getPassword() const		{return(this->_password);}
 // std::string		ClientInfo::getModes() const		{return(this->_modes);}
 // bool			ClientInfo::getOperator() const		{return(this->_isoperator);}
 bool			ClientInfo::getRegistered() const	{return(this->_isregistered);}
@@ -69,7 +69,7 @@ bool			ClientInfo::getRegistered() const	{return(this->_isregistered);}
 void    ClientInfo::setRealname(const std::string &realname)	{_realname = realname;}
 void    ClientInfo::setUsername(const std::string &username)	{_username = username;}
 void    ClientInfo::setNickname(const std::string &nickname)	{_nickname = nickname;}
-// void    ClientInfo::setPassword(const std::string &password)	{_password = password;}
+void    ClientInfo::setPassword(const std::string &password)	{_password = password;}
 // void    ClientInfo::setModes(const std::string &modes) 			{_modes = modes;}
 
 // void    ClientInfo::setOperator(const bool &isoperator) 
