@@ -9,6 +9,7 @@ Server::Server( const std::string & port, const std::string & password ) : _port
 	_cmdsMap["NICK"] = & Server::CmdNick;
 	_cmdsMap["USER"] = & Server::CmdUser;
 	_cmdsMap["PING"] = & Server::CmdPing;
+	_cmdsMap["JOIN"] = & Server::CmdJoin;
 	_cmdsMap["QUIT"] = & Server::CmdQuit;
 
 	running = true;
@@ -331,6 +332,15 @@ ClientInfo*		Server::getClientByNick(const std::string &nickname)
 	return NULL;
 }
 
+void	Server::createChannel(const std::string &name, const std::string &key, ClientInfo *client)
+{
+std::cout << "CREATING CHANNEL : " << name << " key = " << key << " by " << client->getNickname() << std::endl;
+	Channel *channel = new Channel(name, key, client);
+	// client->_channelsMap[name] = channel;
+	client->getChannelsMap()[name] = channel;
+	_channelsMap[name] = channel;
+}
+
 
 
 
@@ -546,4 +556,10 @@ void Server::CmdPing(ClientInfo *client, std::vector<std::string> arg)
 std::cout << "COMMAND : PING" << std::endl;
 	std::string message = arg.at(0);
 	client->reply_command(RPL_PING(client->getPrefix(), message));
+}
+
+void Server::CmdJoin(ClientInfo *client, std::vector<std::string> arg)
+{
+std::cout << "COMMAND : JOIN" << std::endl;
+	createChannel(arg[0], arg[1], client);
 }

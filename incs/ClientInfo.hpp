@@ -13,11 +13,16 @@
 #ifndef CLIENTINFO_HPP
 # define CLIENTINFO_HPP
 
+class ClientInfo;
+
 #include <iostream>
 #include <string>
 #include <sstream>
 #include <sys/poll.h>
 #include <sys/socket.h>
+
+#include "Server.hpp"
+#include "Channel.hpp"
 
 class ClientInfo
 {
@@ -38,6 +43,8 @@ class ClientInfo
 		bool				getRegistered() const;
 		// std::string			getChannels() const;
 		std::string			getPrefix() const;
+
+		std::map<std::string, Channel*> &getChannelsMap();
 
 		void				setRealname(const std::string &realname);
 		void				setUsername(const std::string &username);
@@ -67,6 +74,7 @@ class ClientInfo
 		// std::string 			_modes;
 		// bool					_isoperator;
 		bool					_isregistered;
+		std::map<std::string, Channel*> _channelsMap;
 		// std::vector<Channel *>	_channelsList;
 
 };

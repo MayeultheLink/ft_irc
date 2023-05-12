@@ -32,6 +32,9 @@ std::string		ClientInfo::getPassword() const		{return(this->_password);}
 // std::string		ClientInfo::getModes() const		{return(this->_modes);}
 // bool			ClientInfo::getOperator() const		{return(this->_isoperator);}
 bool			ClientInfo::getRegistered() const	{return(this->_isregistered);}
+
+std::map<std::string, Channel*> &	ClientInfo::getChannelsMap() {return(this->_channelsMap);}
+
 // std::string		ClientInfo::getListChannel()
 // {
 // 	std::string list_channel;

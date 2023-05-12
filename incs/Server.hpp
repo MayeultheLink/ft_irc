@@ -1,6 +1,8 @@
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
+class Server;
+
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,12 +17,13 @@
 #include <cerrno>
 #include <netdb.h>
 #include <signal.h>
-
 #include <map>
 #include <vector>
-#include "ClientInfo.hpp"
-#include "codesDef.hpp"
 #include <cstring>
+
+#include "ClientInfo.hpp"
+#include "Channel.hpp"
+#include "codesDef.hpp"
 
 #define BUFFER_SIZE 1024
 #define MAX_EVENTS 10
@@ -51,6 +54,7 @@ class Server {
 		int epoll_fd;
 		std::map<std::string, void (Server::*)(ClientInfo *, std::vector<std::string>)> _cmdsMap;
 		std::map<int, ClientInfo *> _clientsMap;
+		std::map<std::string, Channel *> _channelsMap;
 
 		void execMsg(ClientInfo *client, std::string message);
 		ClientInfo*	getClientByNick(const std::string &nickname);
@@ -61,7 +65,7 @@ class Server {
 		void newClientConnect (sockaddr_in connect_sock, int connect_fd);
 		void clientMessage(int fd, char *tmp, size_t r);
 		void clientDisconnect(int fd, int epoll_fd);
-
+		void createChannel(const std::string &name, const std::string &key, ClientInfo *client);
 
 		void CmdCap(ClientInfo *client, std::vector<std::string> arg);
 		void CmdNick(ClientInfo *client, std::vector<std::string> arg);
@@ -69,6 +73,7 @@ class Server {
 		void CmdQuit(ClientInfo *client, std::vector<std::string> arg);
 		void CmdPassword(ClientInfo *client, std::vector<std::string> arg);
 		void CmdPing(ClientInfo *client, std::vector<std::string> arg);
+		void CmdJoin(ClientInfo *client, std::vector<std::string> arg);
 
 };
 

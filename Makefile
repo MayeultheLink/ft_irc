@@ -2,8 +2,8 @@ NAME		=	ircserv
 
 SRCS		=	srcs/main.cpp \
 			srcs/Server.cpp \
+			srcs/Channel.cpp \
 			srcs/ClientInfo.cpp
-#			srcs/Channel.cpp \
 
 CC		=	c++
 CFLAGS		=	-Wall -Wextra -Werror -I./incs -std=c++98
