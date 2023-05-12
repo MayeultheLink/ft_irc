@@ -561,5 +561,13 @@ std::cout << "COMMAND : PING" << std::endl;
 void Server::CmdJoin(ClientInfo *client, std::vector<std::string> arg)
 {
 std::cout << "COMMAND : JOIN" << std::endl;
-	createChannel(arg[0], arg[1], client);
+	if (arg.size() == 1)
+		arg.push_back("");
+	if (_channelsMap.find(arg[0]) == _channelsMap.end())
+		createChannel(arg[0], arg[1], client);
+	else if (client->getChannelsMap()->find(arg[0]) == client->getChannelsMap()->end())
+	{
+		_channelsMap[arg[0]]->addClient(client);
+		client->getChannelsMap()[arg[0]] = _channelsMap[arg[0]];
+	}
 }
