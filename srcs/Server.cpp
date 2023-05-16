@@ -190,7 +190,7 @@ size_t getMsgFromFd(int fd, std::string * message)
 	// std:: string message;
 	char tmp[100] = {0};
 	int r;
-	while (message->find("\r\n") == std::string::npos)
+	while (message->find("\r\n") == std::string::npos && message->find("\n") == std::string::npos)
 	{
 		r = recv(fd, tmp, 100, 0);
 		if (r < 0)
@@ -445,6 +445,7 @@ std::cout << "COMMAND : USER" << std::endl;
 
 
 	int param_size = arg.size();
+
 	if (param_size < 3)
 	{
 		client->reply(ERR_NEEDMOREPARAMS(client->getNickname(), "USER"));
