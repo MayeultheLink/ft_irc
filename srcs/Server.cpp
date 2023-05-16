@@ -10,6 +10,8 @@ Server::Server( const std::string & port, const std::string & password ) : _port
 	_cmdsMap["USER"] = & Server::CmdUser;
 	_cmdsMap["PING"] = & Server::CmdPing;
 	_cmdsMap["JOIN"] = & Server::CmdJoin;
+	_cmdsMap["PRIVMSG"] = & Server::CmdPrivmsg;
+	_cmdsMap["PART"] = & Server::CmdPart;
 	_cmdsMap["QUIT"] = & Server::CmdQuit;
 
 	running = true;
@@ -565,9 +567,97 @@ std::cout << "COMMAND : JOIN" << std::endl;
 		arg.push_back("");
 	if (_channelsMap.find(arg[0]) == _channelsMap.end())
 		createChannel(arg[0], arg[1], client);
-	else if (client->getChannelsMap()->find(arg[0]) == client->getChannelsMap()->end())
+	else if (client->getChannelsMap().find(arg[0]) == client->getChannelsMap().end())
 	{
 		_channelsMap[arg[0]]->addClient(client);
 		client->getChannelsMap()[arg[0]] = _channelsMap[arg[0]];
+	}
+}
+
+void Server::CmdPrivmsg(ClientInfo *client, std::vector<std::string> arg)
+{
+std::cout << "COMMAND : PRIVMSG" << std::endl;
+	if (arg.size() < 2 || arg[0].empty() || arg[1].empty())
+	{
+		client->reply(ERR_NEEDMOREPARAMS(client->getNickname(), "PRIVMSG"));
+		return;
+	}
+	std::string	message;
+	for (std::vector<std::string>::iterator it = arg.begin(); it != arg.end(); it++)
+		message.append(*it + " ");
+
+	message = message.substr(message.find(':') + 1);
+
+	std::string target = arg.at(0);
+	if (target.at(0) == '#')
+	{
+		if (_channelsMap.find(target) == _channelsMap.end())
+		{
+			client->reply(ERR_NOSUCHCHANNEL(client->getNickname(), target));
+			return;
+		}
+		//else if ([ban / chan with no external msg allowed])
+		//{
+		//	client->reply(ERR_CANNOTSENDTOCHAN(client->getNickname(), target));
+		//	return;
+		//}
+		_channelsMap[target]->sendAll(RPL_PRIVMSG(client->getPrefix(), target, message), client);
+		return;
+	}
+	else if (getClientByNick(target))
+		getClientByNick(target)->writetosend(RPL_PRIVMSG(client->getPrefix(), target, message));
+	else
+		client->reply(ERR_NOSUCHNICK(client->getNickname(), target));
+}
+
+void Server::CmdPart(ClientInfo *client, std::vector<std::string> arg)
+{
+std::cout << "COMMAND : PART" << std::endl;
+	if (arg.empty())
+	{
+		client->reply(ERR_NEEDMOREPARAMS(client->getNickname(), "PART"));
+		return;
+	}
+
+	std::vector<std::string>	chanVect;
+	std::stringstream		ssChan(arg[0]);
+	std::string			chan;
+
+	while (std::getline(ssChan, chan, ','))
+		chanVect.push_back(chan);
+
+	for (std::vector<std::string>::iterator it = chanVect.begin(); it != chanVect.end(); it++)
+	{
+//		if (it->at(0) != '#')
+//		{
+//			std::string	tmp = *it;
+//			*it = "#";
+//			it.operator*().append(tmp);
+//		}
+		std::string	reason = "";
+		if (arg.size() == 2)
+			reason = arg[1];
+//		Channel	*channel = getChannel(*it);
+		if (_channelsMap.find(*it) == _channelsMap.end())
+		{
+			client->reply(ERR_NOSUCHCHANNEL(client->getNickname(), *it));
+			return;
+		}
+		if (client->getChannelsMap().find(*it) == client->getChannelsMap().end())
+		{
+			client->reply(ERR_NOTONCHANNEL(client->getNickname(), *it));
+			return;
+		}
+
+		_channelsMap.find(*it)->second->sendAll(RPL_PART(client->getPrefix(), *it, reason));
+		_channelsMap.find(*it)->second->removeClient(client);
+
+		client->getChannelsMap().erase(*it);
+
+		if (_channelsMap[*it]->getNbClient() == 0)
+		{
+			delete _channelsMap[*it];
+			_channelsMap.erase(*it);
+		}
 	}
 }

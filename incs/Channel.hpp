@@ -6,7 +6,7 @@
 /*   By: mde-la-s <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/12 15:16:58 by mde-la-s          #+#    #+#             */
-/*   Updated: 2023/05/12 15:47:34 by mde-la-s         ###   ########.fr       */
+/*   Updated: 2023/05/16 17:30:57 by mde-la-s         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,7 @@ class Channel
 //		std::string					getPassword() const;
 //		Client	 					*getAdmin();
 //		size_t						getMaxclients() const;
-//		size_t						getNbclients() const;
+		size_t						getNbClient() const;
 //		size_t						getNboperators() const; //ok
 //		std::vector<Client *>		getOperators() const;
 //		std::string					getNicknamesList();
@@ -51,13 +51,13 @@ class Channel
 	
 		// FCT MEMBRES
 		void			addClient(ClientInfo *client);
-//		void			removeClient(Client *client);
+		void			removeClient(ClientInfo *client);
 //		void			addOperator(Client *operators); //ok àtester
 //		void			removeOperator(Client *operators); //ok à tester +ajout quand -o à faire
 //		bool			client_is_operator(Client *client); //à faire puis tester;
 //		bool			client_is_inchannel(Client *client); // àtester
-//		void			sendall(const std::string& message);
-//		void			sendall(const std::string& message, Client *exclude);
+		void			sendAll(const std::string& message);
+		void			sendAll(const std::string& message, ClientInfo *exclude);
 //		void			consolDeBUGchannel();
 
 	private: 
@@ -73,6 +73,7 @@ class Channel
 		//pour la gestion des modes:
 //		std::string				_modes;
 //		std::string				_topic;
+		
 };
 
 #endif
