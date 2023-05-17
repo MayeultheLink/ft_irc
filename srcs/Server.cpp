@@ -14,6 +14,7 @@ Server::Server( const std::string & port, const std::string & password ) : _port
 	_cmdsMap["NOTICE"] = & Server::CmdNotice;
 	_cmdsMap["PART"] = & Server::CmdPart;
 	_cmdsMap["KICK"] = & Server::CmdKick;
+	_cmdsMap["INVITE"] = & Server::CmdInvite;
 	_cmdsMap["QUIT"] = & Server::CmdQuit;
 
 	running = true;
@@ -597,6 +598,8 @@ std::cout << "COMMAND : JOIN" << std::endl;
 		arg.push_back("");
 	if (_channelsMap.find(arg[0]) == _channelsMap.end())
 		createChannel(arg[0], arg[1], client);
+	else if (_channelsMap[arg[0]]->getIMode() && !_channelsMap[arg[0]]->isInvited(client))
+		client->reply(ERR_INVITEONLYCHAN(client->getNickname(), arg[0]));
 	else if (client->getChannelsMap().find(arg[0]) == client->getChannelsMap().end())
 	{
 		_channelsMap[arg[0]]->addClient(client);
@@ -771,4 +774,41 @@ std::cout << "COMMAND : KICK" << std::endl;
 			}
 		}
 	}
+}
+
+void Server::CmdInvite(ClientInfo *client, std::vector<std::string> arg)
+{
+std::cout << "COMMAND : INVITE" << std::endl;
+	
+	if (arg.size() < 2)
+	{
+		 client->reply(ERR_NEEDMOREPARAMS(client->getNickname(), "Invite"));
+		 return;
+	}
+	std::string nickname = arg.at(0);
+	std::string chanName = arg.at(1);
+	if (_channelsMap.find(chanName) == _channelsMap.end())
+	{
+		client->reply(ERR_NOSUCHCHANNEL(client->getNickname(), chanName));
+		return;
+	}
+	if (client->getChannelsMap().find(chanName) == client->getChannelsMap().end())
+	{
+		client->reply(ERR_NOTONCHANNEL(client->getNickname(), chanName));
+		return;
+	}
+//	if (!_channelsMap[chanName]->isOperator(client))
+//	{
+//		client->reply(ERR_CHANOPRIVSNEEDED(client->getNickname(), chanName));
+//		return;
+//	}
+
+	_channelsMap[chanName]->getInvited().push_back(getClientByNick(nickname));
+	client->reply(RPL_INVITING(client->getPrefix(), nickname, chanName));
+	std::string invite = client->getNickname() + " has invited you to " + chanName;
+	getClientByNick(nickname)->reply(invite);
+
+//	std::string msg = client->getPrefix() + " INVITE " + nickname + " " + chanName;
+//	getClientByNick(nickname)->reply(msg);
+
 }

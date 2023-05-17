@@ -6,7 +6,7 @@
 /*   By: mde-la-s <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/05 17:43:45 by mde-la-s          #+#    #+#             */
-/*   Updated: 2023/05/17 14:57:13 by mde-la-s         ###   ########.fr       */
+/*   Updated: 2023/05/17 20:05:30 by mde-la-s         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,6 +38,7 @@
 #define ERR_UMODEUNKNOWNFLAG()							"501 : Mode flag was not recognised"
 #define ERR_USERSDONTMATCH()							"502 : Cannot change mode for other users"
 #define ERR_NOTREGISTERED(source)						"451 " + source + " : You have not registered"
+#define ERR_INVITEONLYCHAN(source, channel)					"473 " + source + " " + channel + " :Cannot join channel (+i)"
 
 //Réponses du server
 #define RPL_WELCOME(source)						"001 " + source + " :Welcome to the ft_irc network " + source
@@ -54,6 +55,7 @@
 #define RPL_CHANNELMODEIS(target, modes, param)	"324 MODE " + target + " " + modes + " " + param
 #define RPL_NOTOPIC(source, channel)			"331 " + source + " " + channel + " :No topic is set"
 #define RPL_TOPIC(source, channel, topic)		"332 " + source + " " + channel + " " + topic
+#define RPL_INVITING(source, nickname, channel)		"341 " + source + " " + nickname + " " + channel
 #define RPL_WHOREPLY(mask, hopcount, realname)	"352 " + mask + " :" + hopcount + " " + realname
 #define RPL_NAMREPLY(source, channel, users)    "353 " + source + " = " + channel + " :" + users
 #define RPL_ENDOFNAMES(source, channel)			"366 " + source + " " + channel + " :End of /NAMES list."

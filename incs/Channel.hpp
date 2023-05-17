@@ -6,7 +6,7 @@
 /*   By: mde-la-s <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/12 15:16:58 by mde-la-s          #+#    #+#             */
-/*   Updated: 2023/05/17 17:45:41 by mde-la-s         ###   ########.fr       */
+/*   Updated: 2023/05/17 20:03:05 by mde-la-s         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,9 +40,11 @@ class Channel
 //		std::string					getModes() const;
 //		std::string					getTopic() const;
 //		std::vector<Client *>		getClients() const;
+		bool				getIMode() const;
 //
-		std::vector<ClientInfo *>&	getOperators();
 		std::vector<ClientInfo *>&	getClients();
+		std::vector<ClientInfo *>&	getOperators();
+		std::vector<ClientInfo *>&	getInvited();
 
 		// SETTERS
 //		void			setPassword(const std::string password);
@@ -63,6 +65,7 @@ class Channel
 		void			sendAll(const std::string& message, ClientInfo *exclude);
 
 		bool			isOperator(const ClientInfo* client) const;
+		bool			isInvited(const ClientInfo* client) const;
 
 //		void			consolDeBUGchannel();
 
@@ -73,12 +76,15 @@ class Channel
 	//	ClientInfo*				_admin;
 		std::vector<ClientInfo *>		_clients;
 		std::vector<ClientInfo *>		_operators;
+		std::vector<ClientInfo *>		_invited;
 //		size_t					_maxclients;
 		size_t					_nbClient;
 //		size_t					_nboperators; //ok
 		//pour la gestion des modes:
 //		std::string				_modes;
 //		std::string				_topic;
+		
+		bool					_iMode;
 		
 };
 
