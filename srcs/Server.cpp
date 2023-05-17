@@ -11,6 +11,7 @@ Server::Server( const std::string & port, const std::string & password ) : _port
 	_cmdsMap["PING"] = & Server::CmdPing;
 	_cmdsMap["JOIN"] = & Server::CmdJoin;
 	_cmdsMap["PRIVMSG"] = & Server::CmdPrivmsg;
+	_cmdsMap["NOTICE"] = & Server::CmdNotice;
 	_cmdsMap["PART"] = & Server::CmdPart;
 	_cmdsMap["QUIT"] = & Server::CmdQuit;
 
@@ -28,6 +29,12 @@ Server::~Server( void )
 		}
 		_clientsMap.clear();
 	}
+	if (_channelsMap.size())
+	{
+		for (std::map<std::string, Channel *>::iterator it = _channelsMap.begin(); it != _channelsMap.end(); ++it)
+			delete it->second;
+	}
+	_channelsMap.clear();
 }
 
 void handleSignal(int sigint)
@@ -313,7 +320,9 @@ std::cout << "EXEC MSG : " << message << std::endl;
 			{
 				arguments.push_back(buf);
 			}
-			if (_cmdsMap.find(cmd_name) != _cmdsMap.end())
+			if (cmd_name != "CAP" && cmd_name != "PASS" && cmd_name != "USER" && cmd_name != "NICK" && client->getRegistered() != 1)
+				client->reply(ERR_NOTREGISTERED(client->getNickname()));
+			else if (_cmdsMap.find(cmd_name) != _cmdsMap.end())
 				((this->*_cmdsMap[cmd_name]))(client, arguments);
 			// command->execute(client, arguments);
 		}
@@ -609,6 +618,31 @@ std::cout << "COMMAND : PRIVMSG" << std::endl;
 		getClientByNick(target)->writetosend(RPL_PRIVMSG(client->getPrefix(), target, message));
 	else
 		client->reply(ERR_NOSUCHNICK(client->getNickname(), target));
+}
+
+void Server::CmdNotice(ClientInfo *client, std::vector<std::string> arg)
+{
+std::cout << "COMMAND : NOTICE" << std::endl;
+	if (arg.size() < 2 || arg[0].empty() || arg[1].empty())
+		return;
+	std::string	message;
+	for (std::vector<std::string>::iterator it = arg.begin(); it != arg.end(); it++)
+		message.append(*it + " ");
+
+	message = message.substr(message.find(':') + 1);
+
+	std::string target = arg.at(0);
+	if (target.at(0) == '#')
+	{
+		if (_channelsMap.find(target) == _channelsMap.end())
+			return;
+		//else if ([ban / chan with no external msg allowed])
+		//	return;
+		_channelsMap[target]->sendAll(RPL_NOTICE(client->getPrefix(), target, message), client);
+		return;
+	}
+	else if (getClientByNick(target))
+		getClientByNick(target)->writetosend(RPL_NOTICE(client->getPrefix(), target, message));
 }
 
 void Server::CmdPart(ClientInfo *client, std::vector<std::string> arg)

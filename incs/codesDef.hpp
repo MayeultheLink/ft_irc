@@ -6,7 +6,7 @@
 /*   By: mde-la-s <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/05 17:43:45 by mde-la-s          #+#    #+#             */
-/*   Updated: 2023/05/05 17:44:30 by mde-la-s         ###   ########.fr       */
+/*   Updated: 2023/05/17 14:57:13 by mde-la-s         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,6 +37,7 @@
 #define ERR_CHANOPRIVSNEEDED(source, channel)   		"482 " + source + " " + channel + " :You're not channel creator or operator"
 #define ERR_UMODEUNKNOWNFLAG()							"501 : Mode flag was not recognised"
 #define ERR_USERSDONTMATCH()							"502 : Cannot change mode for other users"
+#define ERR_NOTREGISTERED(source)						"451 " + source + " : You have not registered"
 
 //Réponses du server
 #define RPL_WELCOME(source)						"001 " + source + " :Welcome to the ft_irc network " + source

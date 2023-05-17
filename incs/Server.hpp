@@ -75,6 +75,7 @@ class Server {
 		void CmdPing(ClientInfo *client, std::vector<std::string> arg);
 		void CmdJoin(ClientInfo *client, std::vector<std::string> arg);
 		void CmdPrivmsg(ClientInfo *client, std::vector<std::string> arg);
+		void CmdNotice(ClientInfo *client, std::vector<std::string> arg);
 		void CmdPart(ClientInfo *client, std::vector<std::string> arg);
 
 };
