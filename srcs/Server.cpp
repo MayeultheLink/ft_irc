@@ -13,6 +13,7 @@ Server::Server( const std::string & port, const std::string & password ) : _port
 	_cmdsMap["PRIVMSG"] = & Server::CmdPrivmsg;
 	_cmdsMap["NOTICE"] = & Server::CmdNotice;
 	_cmdsMap["PART"] = & Server::CmdPart;
+	_cmdsMap["KICK"] = & Server::CmdKick;
 	_cmdsMap["QUIT"] = & Server::CmdQuit;
 
 	running = true;
@@ -36,6 +37,23 @@ Server::~Server( void )
 	}
 	_channelsMap.clear();
 }
+
+void Server::debugPrints()
+{
+	std::cout << "CHANNELS :\n";
+	for (std::map<std::string, Channel *>::iterator it =  _channelsMap.begin(); it != _channelsMap.end(); it++)
+	{
+		std::cout << it->second->getName() << " : ";
+		for (std::vector<ClientInfo *>::iterator it2 =  it->second->getClients().begin(); it2 != it->second->getClients().end(); it2++)
+		{
+			std::cout << (*it2)->getNickname() << ", ";
+		}
+		std::cout << std::endl;
+
+	}
+
+}
+
 
 void handleSignal(int sigint)
 {
@@ -185,6 +203,8 @@ std::cout << "r = " << r << std::endl;
 				// }
 			}
 		}
+
+		debugPrints();
 	}
 
 	if (close(epoll_fd))
@@ -693,6 +713,62 @@ std::cout << "COMMAND : PART" << std::endl;
 		{
 			delete _channelsMap[*it];
 			_channelsMap.erase(*it);
+		}
+	}
+}
+
+void Server::CmdKick(ClientInfo *client, std::vector<std::string> arg)
+{
+std::cout << "COMMAND : KICK" << std::endl;
+	if (arg.size() < 2)
+	{
+		 client->reply(ERR_NEEDMOREPARAMS(client->getNickname(), "Kick"));
+		 return;
+	}
+	std::string chanName = arg.at(0);
+	if (_channelsMap.find(chanName) == _channelsMap.end())
+	{
+		client->reply(ERR_NOSUCHCHANNEL(client->getNickname(), chanName));
+		return;
+	}
+	if (client->getChannelsMap().find(chanName) == client->getChannelsMap().end())
+	{
+		client->reply(ERR_NOTONCHANNEL(client->getNickname(), chanName));
+		return;
+	}
+	if (!_channelsMap[chanName]->isOperator(client))
+	{
+		client->reply(ERR_CHANOPRIVSNEEDED(client->getNickname(), chanName));
+		return;
+	}
+
+	std::vector<std::string>	usersToKick;
+	std::stringstream		ssUsersToKick(arg[1]);
+	std::string			each_user;
+	while (std::getline(ssUsersToKick, each_user, ','))
+		usersToKick.push_back(each_user);
+
+	for (std::vector<std::string>::iterator it = usersToKick.begin(); it != usersToKick.end(); it++)
+	{
+		std::string	comment = "";
+		if (arg.size() == 3)
+			comment = arg[2];
+		ClientInfo*	clientToKick = getClientByNick(*it);
+
+		if (clientToKick->getChannelsMap().find(chanName) == clientToKick->getChannelsMap().end())
+			client->reply(ERR_USERNOTINCHANNEL(client->getNickname(), (*it), chanName));
+		else
+		{
+			_channelsMap.find(chanName)->second->sendAll(RPL_KICK(client->getPrefix(), chanName, *it, comment));
+			_channelsMap.find(chanName)->second->removeClient(clientToKick);
+
+			clientToKick->getChannelsMap().erase(*it);
+
+			if (_channelsMap[chanName]->getNbClient() == 0)
+			{
+				delete _channelsMap[chanName];
+				_channelsMap.erase(chanName);
+			}
 		}
 	}
 }

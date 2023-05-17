@@ -6,7 +6,7 @@
 /*   By: mde-la-s <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/12 15:16:58 by mde-la-s          #+#    #+#             */
-/*   Updated: 2023/05/16 17:30:57 by mde-la-s         ###   ########.fr       */
+/*   Updated: 2023/05/17 17:45:41 by mde-la-s         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@ class Channel
 		~Channel();
 
 		// GETTERS
-//		std::string					getName() const;
+		const std::string&					getName() const;
 //		std::string					getPassword() const;
 //		Client	 					*getAdmin();
 //		size_t						getMaxclients() const;
@@ -40,6 +40,9 @@ class Channel
 //		std::string					getModes() const;
 //		std::string					getTopic() const;
 //		std::vector<Client *>		getClients() const;
+//
+		std::vector<ClientInfo *>&	getOperators();
+		std::vector<ClientInfo *>&	getClients();
 
 		// SETTERS
 //		void			setPassword(const std::string password);
@@ -58,15 +61,18 @@ class Channel
 //		bool			client_is_inchannel(Client *client); // àtester
 		void			sendAll(const std::string& message);
 		void			sendAll(const std::string& message, ClientInfo *exclude);
+
+		bool			isOperator(const ClientInfo* client) const;
+
 //		void			consolDeBUGchannel();
 
 	private: 
 
-		std::string				_name;
+		std::string const			_name;
 		std::string				_key;
-		ClientInfo*				_admin;
+	//	ClientInfo*				_admin;
 		std::vector<ClientInfo *>		_clients;
-//		std::vector<ClientInfo *>		_operators;
+		std::vector<ClientInfo *>		_operators;
 //		size_t					_maxclients;
 		size_t					_nbClient;
 //		size_t					_nboperators; //ok
