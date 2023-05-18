@@ -6,7 +6,7 @@
 /*   By: mde-la-s <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/12 15:16:58 by mde-la-s          #+#    #+#             */
-/*   Updated: 2023/05/17 20:03:05 by mde-la-s         ###   ########.fr       */
+/*   Updated: 2023/05/18 13:03:16 by mde-la-s         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,7 @@ class Channel
 
 		// GETTERS
 		const std::string&					getName() const;
-//		std::string					getPassword() const;
+		const std::string&				getKey() const;
 //		Client	 					*getAdmin();
 //		size_t						getMaxclients() const;
 		size_t						getNbClient() const;
@@ -41,23 +41,28 @@ class Channel
 //		std::string					getTopic() const;
 //		std::vector<Client *>		getClients() const;
 		bool				getIMode() const;
+		bool				getKMode() const;
 //
 		std::vector<ClientInfo *>&	getClients();
 		std::vector<ClientInfo *>&	getOperators();
 		std::vector<ClientInfo *>&	getInvited();
 
 		// SETTERS
-//		void			setPassword(const std::string password);
+		void			setKey(const std::string & key);
 //		void			setMaxclients(const size_t maxclients);
 //		void			setNbclients(const size_t nbclients);
 //		void			setNboperators(const size_t nboperators); //ok
 //		void			setModes(const std::string &modes);
 //		void			setTopic(const std::string &topic);
+		void			setIMode(bool mode);
+		void			setKMode(bool mode);
 	
 		// FCT MEMBRES
 		void			addClient(ClientInfo *client);
-		void			removeClient(ClientInfo *client);
-//		void			addOperator(Client *operators); //ok àtester
+		void			removeClient(const ClientInfo *client);
+
+		void			removeOperator(const ClientInfo* client);
+
 //		void			removeOperator(Client *operators); //ok à tester +ajout quand -o à faire
 //		bool			client_is_operator(Client *client); //à faire puis tester;
 //		bool			client_is_inchannel(Client *client); // àtester
@@ -73,7 +78,6 @@ class Channel
 
 		std::string const			_name;
 		std::string				_key;
-	//	ClientInfo*				_admin;
 		std::vector<ClientInfo *>		_clients;
 		std::vector<ClientInfo *>		_operators;
 		std::vector<ClientInfo *>		_invited;
@@ -85,6 +89,7 @@ class Channel
 //		std::string				_topic;
 		
 		bool					_iMode;
+		bool					_kMode;
 		
 };
 

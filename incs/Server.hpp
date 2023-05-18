@@ -79,6 +79,7 @@ class Server {
 		void CmdPart(ClientInfo *client, std::vector<std::string> arg);
 		void CmdKick(ClientInfo *client, std::vector<std::string> arg);
 		void CmdInvite(ClientInfo *client, std::vector<std::string> arg);
+		void CmdMode(ClientInfo *client, std::vector<std::string> arg);
 
 void debugPrints();
 

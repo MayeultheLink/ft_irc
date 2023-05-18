@@ -15,6 +15,7 @@ Server::Server( const std::string & port, const std::string & password ) : _port
 	_cmdsMap["PART"] = & Server::CmdPart;
 	_cmdsMap["KICK"] = & Server::CmdKick;
 	_cmdsMap["INVITE"] = & Server::CmdInvite;
+	_cmdsMap["MODE"] = & Server::CmdMode;
 	_cmdsMap["QUIT"] = & Server::CmdQuit;
 
 	running = true;
@@ -369,6 +370,8 @@ void	Server::createChannel(const std::string &name, const std::string &key, Clie
 std::cout << "CREATING CHANNEL : " << name << " key = " << key << " by " << client->getNickname() << std::endl;
 	Channel *channel = new Channel(name, key, client);
 	// client->_channelsMap[name] = channel;
+	if (key != "")
+		channel->setKMode(true);
 	client->getChannelsMap()[name] = channel;
 	_channelsMap[name] = channel;
 }
@@ -597,14 +600,28 @@ std::cout << "COMMAND : JOIN" << std::endl;
 	if (arg.size() == 1)
 		arg.push_back("");
 	if (_channelsMap.find(arg[0]) == _channelsMap.end())
-		createChannel(arg[0], arg[1], client);
-	else if (_channelsMap[arg[0]]->getIMode() && !_channelsMap[arg[0]]->isInvited(client))
-		client->reply(ERR_INVITEONLYCHAN(client->getNickname(), arg[0]));
-	else if (client->getChannelsMap().find(arg[0]) == client->getChannelsMap().end())
 	{
+		createChannel(arg[0], arg[1], client);
 		_channelsMap[arg[0]]->addClient(client);
+		_channelsMap[arg[0]]->getInvited().push_back(client);
 		client->getChannelsMap()[arg[0]] = _channelsMap[arg[0]];
+		return;
 	}
+	if (client->getChannelsMap().find(arg[0]) != client->getChannelsMap().end())
+		return;
+	if (_channelsMap[arg[0]]->getIMode() && !_channelsMap[arg[0]]->isInvited(client))
+	{
+		client->reply(ERR_INVITEONLYCHAN(client->getNickname(), arg[0]));
+		return;
+	}
+	if (_channelsMap[arg[0]]->getKMode() && arg[1] != _channelsMap[arg[0]]->getKey())
+	{
+		client->reply(ERR_PASSWDMISMATCH(client->getNickname()));
+		return;
+	}
+	_channelsMap[arg[0]]->addClient(client);
+	_channelsMap[arg[0]]->getInvited().push_back(client);
+	client->getChannelsMap()[arg[0]] = _channelsMap[arg[0]];
 }
 
 void Server::CmdPrivmsg(ClientInfo *client, std::vector<std::string> arg)
@@ -615,6 +632,7 @@ std::cout << "COMMAND : PRIVMSG" << std::endl;
 		client->reply(ERR_NEEDMOREPARAMS(client->getNickname(), "PRIVMSG"));
 		return;
 	}
+
 	std::string	message;
 	for (std::vector<std::string>::iterator it = arg.begin(); it != arg.end(); it++)
 		message.append(*it + " ");
@@ -629,11 +647,11 @@ std::cout << "COMMAND : PRIVMSG" << std::endl;
 			client->reply(ERR_NOSUCHCHANNEL(client->getNickname(), target));
 			return;
 		}
-		//else if ([ban / chan with no external msg allowed])
-		//{
-		//	client->reply(ERR_CANNOTSENDTOCHAN(client->getNickname(), target));
-		//	return;
-		//}
+		else if ((_channelsMap[target]->getKMode() || _channelsMap[target]->getIMode()) && client->getChannelsMap().find(target) == client->getChannelsMap().end())
+		{
+			client->reply(ERR_CANNOTSENDTOCHAN(client->getNickname(), target));
+			return;
+		}
 		_channelsMap[target]->sendAll(RPL_PRIVMSG(client->getPrefix(), target, message), client);
 		return;
 	}
@@ -810,5 +828,72 @@ std::cout << "COMMAND : INVITE" << std::endl;
 
 //	std::string msg = client->getPrefix() + " INVITE " + nickname + " " + chanName;
 //	getClientByNick(nickname)->reply(msg);
+
+}
+
+void Server::CmdMode(ClientInfo *client, std::vector<std::string> arg)
+{
+std::cout << "COMMAND : MODE" << std::endl;
+
+	if (arg.size() < 2)
+	{
+		client->reply(ERR_NEEDMOREPARAMS(client->getNickname(), "Mode"));
+		return;
+	}
+	std::string chanName = arg[0];
+	std::string modechar = arg[1];
+	if ((modechar[0] != '+' && modechar[0] != '-') || modechar.size() != 2)
+	{
+		client->reply("/mode <channel> [[+|-]modechar [parameter]]");
+		return;
+	}
+	if ((modechar[1] == 'k' || modechar[1] == 'o' || modechar[1] == 'l') && arg.size() < 3)
+	{
+		client->reply(ERR_NEEDMOREPARAMS(client->getNickname(), "Mode"));
+		return;
+	}
+	if (_channelsMap.find(chanName) == _channelsMap.end())
+	{
+		client->reply(ERR_NOSUCHCHANNEL(client->getNickname(), arg[0]));
+		return;
+	}
+	if (!_channelsMap[chanName]->isOperator(client))
+	{
+		client->reply(ERR_CHANOPRIVSNEEDED(client->getNickname(), chanName));
+		return;
+	}
+	if (modechar[1] == 'i')
+	{
+		if (modechar[0] == '+')
+			_channelsMap[chanName]->setIMode(true);
+		else if (modechar[0] == '-')
+			_channelsMap[chanName]->setIMode(false);
+	}
+	else if (modechar[1] == 'o')
+	{
+		if (!getClientByNick(arg[2]))
+		{
+			client->reply(ERR_NOSUCHNICK(client->getPrefix(), arg[2]));
+			return;
+		}
+		if (modechar[0] == '+')
+			_channelsMap[chanName]->getOperators().push_back(getClientByNick(arg[2]));
+		else if (modechar[0] == '-' && _channelsMap[chanName]->isOperator(getClientByNick(arg[2])))
+			_channelsMap[chanName]->removeOperator(getClientByNick(arg[2]));
+	}
+	else if (modechar[1] == 'k')
+	{
+		if (modechar[0] == '+')
+		{
+			_channelsMap[chanName]->setKMode(true);
+			_channelsMap[chanName]->setKey(arg[2]);
+		}
+		else if (modechar[0] == '-')
+			_channelsMap[chanName]->setKMode(false);
+	}
+
+
+
+
 
 }

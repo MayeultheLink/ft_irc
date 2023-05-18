@@ -6,14 +6,14 @@
 /*   By: mde-la-s <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/12 15:33:01 by mde-la-s          #+#    #+#             */
-/*   Updated: 2023/05/17 20:09:38 by mde-la-s         ###   ########.fr       */
+/*   Updated: 2023/05/18 12:53:05 by mde-la-s         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Channel.hpp"
 
 Channel::Channel(const std::string &name, const std::string &key, ClientInfo *client)
-	: _name(name), _key(key), _clients(), _operators(), _invited(), _nbClient(0), _iMode(false)
+	: _name(name), _key(key), _clients(), _operators(), _invited(), _nbClient(0), _iMode(false), _kMode(false)
 {
 	addClient(client);
 	_operators.push_back(client);
@@ -22,7 +22,14 @@ Channel::Channel(const std::string &name, const std::string &key, ClientInfo *cl
 
 Channel::~Channel() {}
 
+const std::string& Channel::getKey( void ) const {return _key;}
+void Channel::setKey( const std::string & key ) {_key = key;}
+
 bool Channel::getIMode( void ) const {return _iMode;}
+void Channel::setIMode( bool set ) {_iMode = set;}
+
+bool Channel::getKMode( void ) const {return _kMode;}
+void Channel::setKMode( bool set ) {_kMode = set;}
 
 std::vector<ClientInfo *>& Channel::getClients( void ) {return _clients;}
 
@@ -40,7 +47,7 @@ void Channel::addClient(ClientInfo *client)
 	_nbClient++;
 }
 
-void Channel::removeClient(ClientInfo *client)
+void Channel::removeClient(const ClientInfo *client)
 {
 	for (std::vector<ClientInfo*>::iterator it = _clients.begin(); it != _clients.end(); ++it)
 	{
@@ -51,6 +58,18 @@ void Channel::removeClient(ClientInfo *client)
 		}
 	}
 	_nbClient--;
+}
+
+void Channel::removeOperator(const ClientInfo *client)
+{
+	for (std::vector<ClientInfo*>::iterator it = _operators.begin(); it != _operators.end(); ++it)
+	{
+		if (*it == client)
+		{
+			_operators.erase(it);
+			break;
+		}
+	}
 }
 
 void Channel::sendAll(const std::string & message, ClientInfo * client)
