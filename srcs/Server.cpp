@@ -206,7 +206,7 @@ std::cout << "r = " << r << std::endl;
 			}
 		}
 
-		debugPrints();
+		//debugPrints();
 	}
 
 	if (close(epoll_fd))
@@ -447,7 +447,7 @@ std::cout << "COMMAND : NICK" << std::endl;
 
 	for (std::map<int, ClientInfo *>::iterator it = _clientsMap.begin(); it != _clientsMap.end(); it++)
 	{
-		if (nickname == it.operator*().second->getNickname())
+		if (nickname == it->second->getNickname())
 				nickname.push_back('_');
 	}
 	if (getClientByNick(nickname))
@@ -602,8 +602,6 @@ std::cout << "COMMAND : JOIN" << std::endl;
 	if (_channelsMap.find(arg[0]) == _channelsMap.end())
 	{
 		createChannel(arg[0], arg[1], client);
-		_channelsMap[arg[0]]->addClient(client);
-		_channelsMap[arg[0]]->getInvited().push_back(client);
 		client->getChannelsMap()[arg[0]] = _channelsMap[arg[0]];
 		return;
 	}
@@ -619,8 +617,12 @@ std::cout << "COMMAND : JOIN" << std::endl;
 		client->reply(ERR_PASSWDMISMATCH(client->getNickname()));
 		return;
 	}
+	if (_channelsMap[arg[0]]->getLMode() && _channelsMap[arg[0]]->getNbClient() >= _channelsMap[arg[0]]->getMaxClient())
+	{
+		client->reply(ERR_CHANNELISFULL(client->getNickname(), arg[0]));
+		return;
+	}
 	_channelsMap[arg[0]]->addClient(client);
-	_channelsMap[arg[0]]->getInvited().push_back(client);
 	client->getChannelsMap()[arg[0]] = _channelsMap[arg[0]];
 }
 
@@ -647,7 +649,7 @@ std::cout << "COMMAND : PRIVMSG" << std::endl;
 			client->reply(ERR_NOSUCHCHANNEL(client->getNickname(), target));
 			return;
 		}
-		else if ((_channelsMap[target]->getKMode() || _channelsMap[target]->getIMode()) && client->getChannelsMap().find(target) == client->getChannelsMap().end())
+		else if ((_channelsMap[target]->getKMode() && client->getChannelsMap().find(target) == client->getChannelsMap().end()) || (_channelsMap[target]->getIMode() && !_channelsMap[target]->isInvited(client)))
 		{
 			client->reply(ERR_CANNOTSENDTOCHAN(client->getNickname(), target));
 			return;
@@ -815,11 +817,11 @@ std::cout << "COMMAND : INVITE" << std::endl;
 		client->reply(ERR_NOTONCHANNEL(client->getNickname(), chanName));
 		return;
 	}
-//	if (!_channelsMap[chanName]->isOperator(client))
-//	{
-//		client->reply(ERR_CHANOPRIVSNEEDED(client->getNickname(), chanName));
-//		return;
-//	}
+	if (_channelsMap[chanName]->getIMode() && !_channelsMap[chanName]->isOperator(client))
+	{
+		client->reply(ERR_CHANOPRIVSNEEDED(client->getNickname(), chanName));
+		return;
+	}
 
 	_channelsMap[chanName]->getInvited().push_back(getClientByNick(nickname));
 	client->reply(RPL_INVITING(client->getPrefix(), nickname, chanName));
@@ -847,11 +849,13 @@ std::cout << "COMMAND : MODE" << std::endl;
 		client->reply("/mode <channel> [[+|-]modechar [parameter]]");
 		return;
 	}
-	if ((modechar[1] == 'k' || modechar[1] == 'o' || modechar[1] == 'l') && arg.size() < 3)
+	if ((modechar[1] == 'k' || modechar[1] == 'o' || (modechar[1] == 'l' && modechar[0] == '+')) && arg.size() < 3)
 	{
 		client->reply(ERR_NEEDMOREPARAMS(client->getNickname(), "Mode"));
 		return;
 	}
+	if (modechar[1] == 'i' && chanName == client->getNickname())
+		return;
 	if (_channelsMap.find(chanName) == _channelsMap.end())
 	{
 		client->reply(ERR_NOSUCHCHANNEL(client->getNickname(), arg[0]));
@@ -865,9 +869,15 @@ std::cout << "COMMAND : MODE" << std::endl;
 	if (modechar[1] == 'i')
 	{
 		if (modechar[0] == '+')
+		{
 			_channelsMap[chanName]->setIMode(true);
+			_channelsMap[chanName]->setAllToInvited();
+		}
 		else if (modechar[0] == '-')
+		{
 			_channelsMap[chanName]->setIMode(false);
+			_channelsMap[chanName]->getInvited().clear();
+		}
 	}
 	else if (modechar[1] == 'o')
 	{
@@ -877,7 +887,15 @@ std::cout << "COMMAND : MODE" << std::endl;
 			return;
 		}
 		if (modechar[0] == '+')
-			_channelsMap[chanName]->getOperators().push_back(getClientByNick(arg[2]));
+		{
+			if (getClientByNick(arg[2])->getChannelsMap().find(chanName) == getClientByNick(arg[2])->getChannelsMap().end())
+			{
+				client->reply(ERR_USERNOTINCHANNEL(client->getPrefix(), arg[2], chanName));
+				return;
+			}
+			if (!_channelsMap[chanName]->isOperator(getClientByNick(arg[2])))
+				_channelsMap[chanName]->getOperators().push_back(getClientByNick(arg[2]));
+		}
 		else if (modechar[0] == '-' && _channelsMap[chanName]->isOperator(getClientByNick(arg[2])))
 			_channelsMap[chanName]->removeOperator(getClientByNick(arg[2]));
 	}
@@ -890,6 +908,22 @@ std::cout << "COMMAND : MODE" << std::endl;
 		}
 		else if (modechar[0] == '-')
 			_channelsMap[chanName]->setKMode(false);
+	}
+	else if (modechar[1] == 'l')
+	{
+		if (modechar[0] == '+')
+		{
+			for (std::string::iterator it = arg[2].begin(); it != arg[2].end(); it++)
+				if (!std::isdigit(*it))
+					return;
+			_channelsMap[chanName]->setLMode(true);
+			std::stringstream ss(arg[2]);
+			size_t maxClient;
+			ss >> maxClient;
+			_channelsMap[chanName]->setMaxClient(maxClient);
+		}
+		else if (modechar[0] == '-')
+			_channelsMap[chanName]->setLMode(false);
 	}
 
 

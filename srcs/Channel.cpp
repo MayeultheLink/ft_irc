@@ -6,18 +6,17 @@
 /*   By: mde-la-s <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/12 15:33:01 by mde-la-s          #+#    #+#             */
-/*   Updated: 2023/05/18 12:53:05 by mde-la-s         ###   ########.fr       */
+/*   Updated: 2023/05/18 18:21:39 by mde-la-s         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Channel.hpp"
 
 Channel::Channel(const std::string &name, const std::string &key, ClientInfo *client)
-	: _name(name), _key(key), _clients(), _operators(), _invited(), _nbClient(0), _iMode(false), _kMode(false)
+	: _name(name), _key(key), _clients(), _operators(), _invited(), _nbClient(0), _maxClient(0), _iMode(false), _kMode(false), _lMode(false)
 {
 	addClient(client);
 	_operators.push_back(client);
-	_invited.push_back(client);
 }
 
 Channel::~Channel() {}
@@ -31,15 +30,18 @@ void Channel::setIMode( bool set ) {_iMode = set;}
 bool Channel::getKMode( void ) const {return _kMode;}
 void Channel::setKMode( bool set ) {_kMode = set;}
 
+bool Channel::getLMode( void ) const {return _lMode;}
+void Channel::setLMode( bool set ) {_lMode = set;}
+
 std::vector<ClientInfo *>& Channel::getClients( void ) {return _clients;}
-
 std::vector<ClientInfo *>& Channel::getOperators( void ) {return _operators;}
-
 std::vector<ClientInfo *>& Channel::getInvited( void ) {return _invited;}
 
-size_t Channel::getNbClient() const {return _nbClient;}
-
 const std::string & Channel::getName() const {return _name;}
+size_t Channel::getNbClient() const {return _nbClient;}
+const size_t& Channel::getMaxClient() const {return _maxClient;}
+
+void Channel::setMaxClient(const size_t& maxClient) {_maxClient = maxClient;}
 
 void Channel::addClient(ClientInfo *client)
 {
@@ -70,6 +72,12 @@ void Channel::removeOperator(const ClientInfo *client)
 			break;
 		}
 	}
+}
+
+void Channel::setAllToInvited( void )
+{
+	for (std::vector<ClientInfo*>::iterator it = _clients.begin(); it != _clients.end(); ++it)
+		_invited.push_back(*it);
 }
 
 void Channel::sendAll(const std::string & message, ClientInfo * client)
