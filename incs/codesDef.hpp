@@ -6,7 +6,7 @@
 /*   By: mde-la-s <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/05 17:43:45 by mde-la-s          #+#    #+#             */
-/*   Updated: 2023/05/18 11:24:07 by mde-la-s         ###   ########.fr       */
+/*   Updated: 2023/05/18 19:39:16 by mde-la-s         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,8 +25,8 @@
 #define ERR_NONICKNAMEGIVEN(source, command)			"431 " + source + " " + command + " :No new nickname has been given"
 #define ERR_ERRONEUSNICKNAME(source)					"432 " + source + " :This nickname is Invalid" 
 #define ERR_NICKNAMEINUSE(source)						"433 " + source + " :This nickname is already in use"
-#define ERR_USERNOTINCHANNEL(source, target, channel) 	"441 " + source + " " + target + " " + channel + " :the target user of the command is not on channel"
-#define ERR_NOTONCHANNEL(source, channel)				"442 " + source + " " + channel + " :This user is not a member of this channel"
+#define ERR_USERNOTINCHANNEL(source, target, channel) 	"441 " + source + " " + target + " " + channel + " :They aren't on that channel"
+#define ERR_NOTONCHANNEL(source, channel)				"442 " + source + " " + channel + " :You're not on that channel"
 #define ERR_NEEDMOREPARAMS(source, command)				"461 " + source + " " + command + " :Not enough parameters"
 #define ERR_ALREADYREGISTERED(source)					"462 " + source + " :You may not reregister, you already have!"
 #define ERR_PASSWDMISMATCH(source)						"464 " + source + " :Is NOT the correct password for the given name."

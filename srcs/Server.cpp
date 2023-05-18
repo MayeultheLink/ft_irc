@@ -15,6 +15,7 @@ Server::Server( const std::string & port, const std::string & password ) : _port
 	_cmdsMap["PART"] = & Server::CmdPart;
 	_cmdsMap["KICK"] = & Server::CmdKick;
 	_cmdsMap["INVITE"] = & Server::CmdInvite;
+	_cmdsMap["TOPIC"] = & Server::CmdTopic;
 	_cmdsMap["MODE"] = & Server::CmdMode;
 	_cmdsMap["QUIT"] = & Server::CmdQuit;
 
@@ -50,6 +51,12 @@ void Server::debugPrints()
 		{
 			std::cout << (*it2)->getNickname() << ", ";
 		}
+		std::cout << "end of clients\n";
+		for (std::vector<ClientInfo *>::iterator it2 =  it->second->getOperators().begin(); it2 != it->second->getOperators().end(); it2++)
+		{
+			std::cout << (*it2)->getNickname() << ", ";
+		}
+		std::cout << "end of operators\n";
 		std::cout << std::endl;
 
 	}
@@ -206,7 +213,7 @@ std::cout << "r = " << r << std::endl;
 			}
 		}
 
-		//debugPrints();
+		debugPrints();
 	}
 
 	if (close(epoll_fd))
@@ -624,6 +631,7 @@ std::cout << "COMMAND : JOIN" << std::endl;
 	}
 	_channelsMap[arg[0]]->addClient(client);
 	client->getChannelsMap()[arg[0]] = _channelsMap[arg[0]];
+	client->reply(RPL_TOPIC(client->getPrefix(), arg[0], _channelsMap[arg[0]]->getTopic()));
 }
 
 void Server::CmdPrivmsg(ClientInfo *client, std::vector<std::string> arg)
@@ -833,6 +841,50 @@ std::cout << "COMMAND : INVITE" << std::endl;
 
 }
 
+void Server::CmdTopic(ClientInfo *client, std::vector<std::string> arg)
+{
+std::cout << "COMMAND : TOPIC" << std::endl;
+
+	if (arg.size() < 1)
+	{
+		client->reply(ERR_NEEDMOREPARAMS(client->getNickname(), "Topic"));
+		return;
+	}
+	std::string chanName = arg[0];
+	if (_channelsMap.find(chanName) == _channelsMap.end())
+	{
+		client->reply(ERR_NOSUCHCHANNEL(client->getNickname(), chanName));
+		return;
+	}
+	if (_channelsMap[chanName]->getTMode() && !_channelsMap[chanName]->isOperator(client))
+	{
+	//	client->reply(ERR_CHANOPRIVSNEEDED(client->getNickname(), chanName));
+		return;
+	}
+	if (client->getChannelsMap().find(chanName) == client->getChannelsMap().end())
+	{
+		client->reply(ERR_NOTONCHANNEL(client->getPrefix(), chanName));
+		return;
+	}
+	if (arg.size() == 1)
+	{
+		if (_channelsMap[chanName]->getTopic() == "")
+			client->reply(RPL_NOTOPIC(client->getPrefix(), chanName));
+		else
+			client->reply(RPL_TOPIC(client->getPrefix(), chanName, _channelsMap[chanName]->getTopic()));
+		return;
+	}
+	else
+	{
+		std::string topic = "";
+		for (size_t i = 1; i < arg.size(); i++)
+			topic.append(arg[i] + " ");
+		topic.erase(--topic.end());
+		_channelsMap[chanName]->setTopic(topic);
+		_channelsMap[chanName]->sendAll(RPL_TOPIC(client->getPrefix(), chanName, topic));
+	}
+}
+
 void Server::CmdMode(ClientInfo *client, std::vector<std::string> arg)
 {
 std::cout << "COMMAND : MODE" << std::endl;
@@ -858,7 +910,7 @@ std::cout << "COMMAND : MODE" << std::endl;
 		return;
 	if (_channelsMap.find(chanName) == _channelsMap.end())
 	{
-		client->reply(ERR_NOSUCHCHANNEL(client->getNickname(), arg[0]));
+		client->reply(ERR_NOSUCHCHANNEL(client->getNickname(), chanName));
 		return;
 	}
 	if (!_channelsMap[chanName]->isOperator(client))
@@ -925,9 +977,11 @@ std::cout << "COMMAND : MODE" << std::endl;
 		else if (modechar[0] == '-')
 			_channelsMap[chanName]->setLMode(false);
 	}
-
-
-
-
-
+	else if (modechar[1] == 't')
+	{
+		if (modechar[0] == '+')
+			_channelsMap[chanName]->setTMode(true);
+		else if (modechar[0] == '-')
+			_channelsMap[chanName]->setTMode(false);
+	}
 }

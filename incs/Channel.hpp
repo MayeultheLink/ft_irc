@@ -6,7 +6,7 @@
 /*   By: mde-la-s <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/12 15:16:58 by mde-la-s          #+#    #+#             */
-/*   Updated: 2023/05/18 18:02:40 by mde-la-s         ###   ########.fr       */
+/*   Updated: 2023/05/18 19:26:56 by mde-la-s         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,8 @@ class Channel
 		const std::string&				getKey() const;
 //		Client	 					*getAdmin();
 		size_t						getNbClient() const;
-		const size_t &					getMaxClient() const;
+		const size_t&					getMaxClient() const;
+		const std::string&				getTopic() const;
 //		size_t						getNboperators() const; //ok
 //		std::vector<Client *>		getOperators() const;
 //		std::string					getNicknamesList();
@@ -43,6 +44,7 @@ class Channel
 		bool				getIMode() const;
 		bool				getKMode() const;
 		bool				getLMode() const;
+		bool				getTMode() const;
 //
 		std::vector<ClientInfo *>&	getClients();
 		std::vector<ClientInfo *>&	getOperators();
@@ -51,6 +53,7 @@ class Channel
 		// SETTERS
 		void			setKey(const std::string & key);
 		void			setMaxClient(const size_t & maxClient);
+		void			setTopic(const std::string& topic);
 //		void			setNbclients(const size_t nbclients);
 //		void			setNboperators(const size_t nboperators); //ok
 //		void			setModes(const std::string &modes);
@@ -58,6 +61,7 @@ class Channel
 		void			setIMode(bool mode);
 		void			setKMode(bool mode);
 		void			setLMode(bool mode);
+		void			setTMode(bool mode);
 	
 		// FCT MEMBRES
 		void			addClient(ClientInfo *client);
@@ -80,21 +84,19 @@ class Channel
 
 	private: 
 
-		std::string const			_name;
-		std::string				_key;
-		std::vector<ClientInfo *>		_clients;
-		std::vector<ClientInfo *>		_operators;
-		std::vector<ClientInfo *>		_invited;
-		size_t					_nbClient;
-		size_t					_maxClient;
-//		size_t					_nboperators; //ok
-		//pour la gestion des modes:
-//		std::string				_modes;
-//		std::string				_topic;
+		const std::string		_name;
+		std::string			_key;
+		std::string			_topic;
+		std::vector<ClientInfo *>	_clients;
+		std::vector<ClientInfo *>	_operators;
+		std::vector<ClientInfo *>	_invited;
+		size_t				_nbClient;
+		size_t				_maxClient;
 		
-		bool					_iMode;
-		bool					_kMode;
-		bool					_lMode;
+		bool				_iMode;
+		bool				_kMode;
+		bool				_lMode;
+		bool				_tMode;
 		
 };
 

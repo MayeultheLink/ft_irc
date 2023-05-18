@@ -6,14 +6,14 @@
 /*   By: mde-la-s <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/12 15:33:01 by mde-la-s          #+#    #+#             */
-/*   Updated: 2023/05/18 18:21:39 by mde-la-s         ###   ########.fr       */
+/*   Updated: 2023/05/18 19:38:19 by mde-la-s         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Channel.hpp"
 
 Channel::Channel(const std::string &name, const std::string &key, ClientInfo *client)
-	: _name(name), _key(key), _clients(), _operators(), _invited(), _nbClient(0), _maxClient(0), _iMode(false), _kMode(false), _lMode(false)
+	: _name(name), _key(key), _topic(""), _clients(), _operators(), _invited(), _nbClient(0), _maxClient(0), _iMode(false), _kMode(false), _lMode(false), _tMode(false)
 {
 	addClient(client);
 	_operators.push_back(client);
@@ -33,6 +33,9 @@ void Channel::setKMode( bool set ) {_kMode = set;}
 bool Channel::getLMode( void ) const {return _lMode;}
 void Channel::setLMode( bool set ) {_lMode = set;}
 
+bool Channel::getTMode( void ) const {return _tMode;}
+void Channel::setTMode( bool set ) {_tMode = set;}
+
 std::vector<ClientInfo *>& Channel::getClients( void ) {return _clients;}
 std::vector<ClientInfo *>& Channel::getOperators( void ) {return _operators;}
 std::vector<ClientInfo *>& Channel::getInvited( void ) {return _invited;}
@@ -40,8 +43,10 @@ std::vector<ClientInfo *>& Channel::getInvited( void ) {return _invited;}
 const std::string & Channel::getName() const {return _name;}
 size_t Channel::getNbClient() const {return _nbClient;}
 const size_t& Channel::getMaxClient() const {return _maxClient;}
+const std::string& Channel::getTopic() const {return _topic;}
 
 void Channel::setMaxClient(const size_t& maxClient) {_maxClient = maxClient;}
+void Channel::setTopic(const std::string& topic) {_topic = topic;}
 
 void Channel::addClient(ClientInfo *client)
 {
