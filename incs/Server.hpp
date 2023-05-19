@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Server.hpp                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mde-la-s <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2023/05/19 15:43:43 by mde-la-s          #+#    #+#             */
+/*   Updated: 2023/05/19 15:47:25 by mde-la-s         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
@@ -28,42 +40,29 @@ class Server;
 #define BUFFER_SIZE 1024
 #define MAX_EVENTS 10
 
-// void CmdCap(Server *server, ClientInfo *client, std::vector<std::string> arg);
-// void CmdNick(Server *server, ClientInfo *client, std::vector<std::string> arg);
-// void CmdUser(Server *server, ClientInfo *client, std::vector<std::string> arg);
-
 extern bool running;
 
 size_t getMsgFromFd(int fd, std::string * message);
 
 class Server {
 
-	public :
-
-		Server( const std::string & port, const std::string & password );
-		~Server( void );
-
-		void launch( void );
-
-
 	private :
 
-		const std::string _port;
-		const std::string _password;
-		int _sockfd;
-		int epoll_fd;
-		std::map<std::string, void (Server::*)(ClientInfo *, std::vector<std::string>)> _cmdsMap;
-		std::map<int, ClientInfo *> _clientsMap;
-		std::map<std::string, Channel *> _channelsMap;
-
-		void execMsg(ClientInfo *client, std::string message);
-		ClientInfo*	getClientByNick(const std::string &nickname);
-
+		const std::string								_port;
+		const std::string								_password;
+		int 										_sockfd;
+		int										epoll_fd;
+		std::map<std::string, void (Server::*)(ClientInfo *, std::vector<std::string>)>	_cmdsMap;
+		std::map<int, ClientInfo *>							_clientsMap;
+		std::map<std::string, Channel *>						_channelsMap;
 
 		void generate_socket( void );
 
+		ClientInfo* getClientByNick(const std::string &nickname);
+
 		void newClientConnect (sockaddr_in connect_sock, int connect_fd);
 		void clientMessage(int fd, char *tmp, size_t r);
+		void execMsg(ClientInfo *client, std::string message);
 		void clientDisconnect(int fd, int epoll_fd);
 		void createChannel(const std::string &name, const std::string &key, ClientInfo *client);
 
@@ -83,6 +82,13 @@ class Server {
 		void CmdMode(ClientInfo *client, std::vector<std::string> arg);
 
 void debugPrints();
+
+	public :
+
+		Server( const std::string & port, const std::string & password );
+		~Server( void );
+
+		void launch( void );
 
 };
 

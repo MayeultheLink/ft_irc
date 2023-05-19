@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Server.cpp                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mde-la-s <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2023/05/19 15:50:43 by mde-la-s          #+#    #+#             */
+/*   Updated: 2023/05/19 15:56:50 by mde-la-s         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "Server.hpp"
 
 bool running;
@@ -119,8 +131,6 @@ std::cout << "START\n";
 	}
 
 	int event_count;
-	// char buffer[BUFFER_SIZE + 1];
-	// int bytes_read;
 	struct epoll_event events[MAX_EVENTS];
 	
 	while (running) 
@@ -155,18 +165,6 @@ std::cout << "ClientInfo n " << event.data.fd << " connected" << std::endl;
 					break ;
 				}
 			}
-			// else
-			// {
-			// 	printf("entering else condition\n");
-			// 	bytes_read = recv(events[i].data.fd, buffer, BUFFER_SIZE, 0);
-			// 	buffer[bytes_read] = 0;
-			// 	std::string cast(buffer);
-			// 	std::cout << cast << std::endl;
-			// 	//send(_sockfd, buffer, strlen(buffer), 0);
-			// 	//write(1, "\n", 1);
-			// 	//printf("%s\n", buffer);
-			// //	running = 0;
-			// }
 			else
 			{
 std::cout << "other fd communication" << std::endl;
@@ -187,29 +185,6 @@ std::cout << "r = " << r << std::endl;
 				}
 				else
 					execMsg(_clientsMap[events[i].data.fd], message);
-
-
-					// if (errno != EWOULDBLOCK)
-						//throw std::runtime_error("Error while receiving message from client.");	
-				// int fd = events[i].data.fd;
-				// char buffer[1024];
-				// bzero(buffer, 1024);
-				// ssize_t n = recv(fd, buffer, sizeof buffer, 0);
-				// if(n == -1)
-				// {
-				// 	perror("Error while receiving data.");
-				// 	break;
-				// }
-				// else if(n == 0)
-				// {
-				// 	onClientDisconnect(fd, epoll_fd);
-				// 	continue;
-				// }
-				// else
-				// {
-				// 	onClientMessage(fd, buffer, n);
-				// 	//break;
-				// }
 			}
 		}
 
@@ -223,7 +198,6 @@ std::cout << "r = " << r << std::endl;
 
 size_t getMsgFromFd(int fd, std::string * message)
 {
-	// std:: string message;
 	char tmp[100] = {0};
 	int r;
 	while (message->find("\r\n") == std::string::npos && message->find("\n") == std::string::npos)
@@ -244,86 +218,42 @@ size_t getMsgFromFd(int fd, std::string * message)
 	return r;
 }
 
-void	Server::newClientConnect (sockaddr_in connect_sock, int connect_fd)
+void Server::newClientConnect (sockaddr_in connect_sock, int connect_fd)
 {
 	char hostname[100];
 	if (getnameinfo((struct sockaddr *) &connect_sock, sizeof(connect_sock), hostname, 100, NULL, 0, NI_NUMERICSERV) != 0)
 		throw std::runtime_error("Error while getting hostname on new client.");
 
-	std::cout << "CLIENT CONNECT: hostname = " << hostname << std::endl;
-
-	// (void) connect_fd;
+std::cout << "CLIENT CONNECT: hostname = " << hostname << std::endl;
 
 	ClientInfo *client = new ClientInfo(hostname, connect_fd, ntohs(connect_sock.sin_port));
 	std::cout << hostname << ":" << ntohs(connect_sock.sin_port) << " has connected." << std::endl << std::endl;
-	// _clientsMap.insert(std::make_pair(connect_fd, client)); 
 	_clientsMap[connect_fd] = client;
 
 	std:: string message;
 	getMsgFromFd(connect_fd, &message);
-//	char tmp[100] = {0};
-//	while (message.find("\r\n") == std::string::npos)
-//	{
-//		int r = recv(connect_fd, tmp, 100, 0);
-//		if (r < 0)
-//		{
-//			if (errno != EWOULDBLOCK)
-//				throw std::runtime_error("Error while receiving message from client.");			
-//		}
-//		message.append(tmp, r);
-//	}
 std::cout << "message = " << message << std::endl;
 
 	execMsg(client, message);
 
-	// if (_errorpass == 0)
-	// {
-		// client->setRegistered(1);
-//	client->reply(RPL_WELCOME(client->getNickname()));
-		// std::cout << "password: " << client->getPassword() << std::endl;
 std::cout << "newco nickname: " << client->getNickname() << std::endl;
 std::cout << "newco username: " << client->getUsername() << std::endl;
 std::cout << "newco realname: " << client->getRealname() << std::endl;
-	// }
-	// else
-	// {
-	// 	_errorpass = 0;
-	// 	client->reply_command(RPL_ERROR(client->getNickname()));
-	// 	onClientDisconnect(client->getFd(), getEpollfd());
-	// }
 }
 
-// void	Server::clientMessage(int fd, char *tmp, size_t r)
-// {
-// 	try
-// 	{
-// 		std::string message = recvMessage(fd, tmp, r);
-// 		std::cout << RED << "\nmessage = " << message << RESET;
-// 		Client	*client = _clients.at(fd);
-// 		_commandHandler->recup_msg(client, message);
-// 	}
-// 	catch(const std::exception& e)
-// 	{
-// 		std::cerr << e.what() << '\n';
-// 	}
-// }
-
-void		Server::clientDisconnect(int fd, int epoll_fd)
+void Server::clientDisconnect(int fd, int epoll_fd)
 {
 std::cout << "CLIENT DISCONNECT" << std::endl;
 
-	// Remove the client from the epoll instance (flag EPOLL_CTL_DEL)
 	epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, 0);
-	// Close the socket for this client
 	std::cout << "Client n°" << fd << " va se déconnecter." << std::endl;
 	delete _clientsMap.at(fd);
 	_clientsMap.erase(fd);
 	close(fd);
-	// Log the client disconnection
 	std::cout << "Client n°" << fd << " s'est déconnecté." << std::endl;
 }
 
-void	Server::execMsg(ClientInfo *client, std::string message)
+void Server::execMsg(ClientInfo *client, std::string message)
 {
 std::cout << "EXEC MSG : " << message << std::endl;
 
@@ -339,7 +269,6 @@ std::cout << "EXEC MSG : " << message << std::endl;
 		std::string cmd_name = msg_parse.substr(0, msg_parse.find(' '));
 		try
 		{
-			// Command 					*command = _commands.at(cmd_name);
 			std::vector<std::string>	arguments;
 			std::string 				buf;
 			std::stringstream 			ssArg(msg_parse.substr(cmd_name.length(), msg_parse.length()));
@@ -353,7 +282,6 @@ std::cout << "EXEC MSG : " << message << std::endl;
 				client->reply(ERR_NOTREGISTERED(client->getNickname()));
 			else if (_cmdsMap.find(cmd_name) != _cmdsMap.end())
 				((this->*_cmdsMap[cmd_name]))(client, arguments);
-			// command->execute(client, arguments);
 		}
 		catch (const std::out_of_range &e)
 		{
@@ -362,7 +290,7 @@ std::cout << "EXEC MSG : " << message << std::endl;
 	}
 }
 
-ClientInfo*		Server::getClientByNick(const std::string &nickname)
+ClientInfo* Server::getClientByNick(const std::string &nickname)
 {
 	for (std::map<int, ClientInfo *>::iterator it = _clientsMap.begin(); it != _clientsMap.end(); it++)
 	{
@@ -372,11 +300,10 @@ ClientInfo*		Server::getClientByNick(const std::string &nickname)
 	return NULL;
 }
 
-void	Server::createChannel(const std::string &name, const std::string &key, ClientInfo *client)
+void Server::createChannel(const std::string &name, const std::string &key, ClientInfo *client)
 {
 std::cout << "CREATING CHANNEL : " << name << " key = " << key << " by " << client->getNickname() << std::endl;
 	Channel *channel = new Channel(name, key, client);
-	// client->_channelsMap[name] = channel;
 	if (key != "")
 		channel->setKMode(true);
 	client->getChannelsMap()[name] = channel;
@@ -410,7 +337,6 @@ bool checkNickInvalid(std::string nickname)
 	int i = 0;
 	int length = nickname.length();
 
-	//La taille du nick ne doit pas depasser 9 idealement
 	if (length > 9)
 	{
 		std::cout << "NICK Error: Nickname is too big (>9)" << std::endl;
@@ -433,7 +359,6 @@ bool checkNickInvalid(std::string nickname)
 	return true;
 }
 
-// syntax : /nick <new nick> -> 1 paramètre obligatoire !
 void Server::CmdNick(ClientInfo *client, std::vector<std::string> arg)
 {
 std::cout << "COMMAND : NICK" << std::endl;
@@ -450,7 +375,6 @@ std::cout << "COMMAND : NICK" << std::endl;
 		client->reply(ERR_ERRONEUSNICKNAME(client->getNickname()));
 		return;
 	}
-	// std::map<int, ClientInfo *> _clientsMap = getClients();
 
 	for (std::map<int, ClientInfo *>::iterator it = _clientsMap.begin(); it != _clientsMap.end(); it++)
 	{
@@ -467,8 +391,8 @@ std::cout << "COMMAND : NICK" << std::endl;
 	client->setNickname(nickname);
 	reply.append(" changed his nickname to ");
 	reply.append(client->getNickname()); 
-	client->reply_command(reply);
-	client->reply_command(RPL_NICK(oldNick, newNick));
+	client->sendMsg(reply);
+	client->sendMsg(RPL_NICK(oldNick, newNick));
 
 }
 
@@ -500,7 +424,6 @@ std::cout << "COMMAND : USER" << std::endl;
 	{
 		client->reply(ERR_PASSWDMISMATCH(client->getNickname()));
 		clientDisconnect(client->getFd(), epoll_fd);
-	// 	_server->setErrorPass(1);
 		return;
 	}
 	else
@@ -511,11 +434,6 @@ std::cout << "COMMAND : USER" << std::endl;
 		client->setUsername(username);
 		for (std::vector<std::string>::iterator it = arg.begin(); it != arg.end(); ++it) 
 		{
-			// std::string tosend; 
-			// tosend = (*it); 
-			// message.append(" ");
-			// message.append(tosend);
-
 			message.append(" ");
 			message.append(*it);
 		}
@@ -549,18 +467,8 @@ std::cout << "COMMAND : QUIT" << std::endl;
 		message = "leaving";
 	else
 		message = (arg.at(0)).substr(1);
-	client->reply(RPL_QUIT(client->getPrefix(), message));
+	client->sendMsg(RPL_QUIT(client->getPrefix(), message));
 	clientDisconnect(client->getFd(), epoll_fd);
-//	std::vector<Channel *>	channels_userkill;
-//	channels_userkill = client->getChannel();
-//	for (std::vector<Channel *>::iterator it = channels_userkill.begin(); it != channels_userkill.end(); it++)
-//	{
-//		client->leave_channel((*it), leave, 1);
-//		if ((*it)->getNbclients() == 0)
-//			_server->destroyChannel(*it);
-//	}
-
-	//_server->~Server();
 }
 
 void Server::CmdPassword(ClientInfo *client, std::vector<std::string> arg)
@@ -578,27 +486,14 @@ std::cout << "COMMAND : PASS" << std::endl;
 		return;
 	}
 	else
-	{
-	//	std::cout << RED << "ATTENTION: on est dans PassCommand, on set le password avant l'enregistrement!" << RESET << std::endl;
-		//cette partie à utiliser si on enlève le parsing du début
-		std::string Pass = arg[0];
-	//	std::cout << Pass << std::endl;
-		client->setPassword(Pass);
-	}
-//	if (client->getPassword() != "" && client->getPassword() != _server->getPassword())
-//	{
-//		client->reply(ERR_PASSWDMISMATCH(client->getNickname()));
-//		//_server->onClientDisconnect(client->getFd(), _server->getEpollfd());
-//		_server->setErrorPass(1);
-//		return;
-//	}
+		client->setPassword(arg[0]);
 }
 
 void Server::CmdPing(ClientInfo *client, std::vector<std::string> arg)
 {
 std::cout << "COMMAND : PING" << std::endl;
 	std::string message = arg.at(0);
-	client->reply_command(RPL_PING(client->getPrefix(), message));
+	client->sendMsg(RPL_PING(client->getPrefix(), message));
 }
 
 void Server::CmdJoin(ClientInfo *client, std::vector<std::string> arg)
@@ -666,7 +561,7 @@ std::cout << "COMMAND : PRIVMSG" << std::endl;
 		return;
 	}
 	else if (getClientByNick(target))
-		getClientByNick(target)->writetosend(RPL_PRIVMSG(client->getPrefix(), target, message));
+		getClientByNick(target)->sendMsg(RPL_PRIVMSG(client->getPrefix(), target, message));
 	else
 		client->reply(ERR_NOSUCHNICK(client->getNickname(), target));
 }
@@ -687,13 +582,13 @@ std::cout << "COMMAND : NOTICE" << std::endl;
 	{
 		if (_channelsMap.find(target) == _channelsMap.end())
 			return;
-		//else if ([ban / chan with no external msg allowed])
-		//	return;
+		else if ((_channelsMap[target]->getKMode() && client->getChannelsMap().find(target) == client->getChannelsMap().end()) || (_channelsMap[target]->getIMode() && !_channelsMap[target]->isInvited(client)))
+			return;
 		_channelsMap[target]->sendAll(RPL_NOTICE(client->getPrefix(), target, message), client);
 		return;
 	}
 	else if (getClientByNick(target))
-		getClientByNick(target)->writetosend(RPL_NOTICE(client->getPrefix(), target, message));
+		getClientByNick(target)->sendMsg(RPL_NOTICE(client->getPrefix(), target, message));
 }
 
 void Server::CmdPart(ClientInfo *client, std::vector<std::string> arg)
@@ -714,16 +609,9 @@ std::cout << "COMMAND : PART" << std::endl;
 
 	for (std::vector<std::string>::iterator it = chanVect.begin(); it != chanVect.end(); it++)
 	{
-//		if (it->at(0) != '#')
-//		{
-//			std::string	tmp = *it;
-//			*it = "#";
-//			it.operator*().append(tmp);
-//		}
 		std::string	reason = "";
 		if (arg.size() == 2)
 			reason = arg[1];
-//		Channel	*channel = getChannel(*it);
 		if (_channelsMap.find(*it) == _channelsMap.end())
 		{
 			client->reply(ERR_NOSUCHCHANNEL(client->getNickname(), *it));
@@ -830,14 +718,15 @@ std::cout << "COMMAND : INVITE" << std::endl;
 		client->reply(ERR_CHANOPRIVSNEEDED(client->getNickname(), chanName));
 		return;
 	}
-
+	if (!getClientByNick(nickname))
+	{
+		client->reply(ERR_NOSUCHNICK(client->getPrefix(), nickname));
+		return;
+	}
 	_channelsMap[chanName]->getInvited().push_back(getClientByNick(nickname));
 	client->reply(RPL_INVITING(client->getPrefix(), nickname, chanName));
 	std::string invite = client->getNickname() + " has invited you to " + chanName;
 	getClientByNick(nickname)->reply(invite);
-
-//	std::string msg = client->getPrefix() + " INVITE " + nickname + " " + chanName;
-//	getClientByNick(nickname)->reply(msg);
 
 }
 
@@ -858,7 +747,7 @@ std::cout << "COMMAND : TOPIC" << std::endl;
 	}
 	if (_channelsMap[chanName]->getTMode() && !_channelsMap[chanName]->isOperator(client))
 	{
-	//	client->reply(ERR_CHANOPRIVSNEEDED(client->getNickname(), chanName));
+		client->reply(ERR_CHANOPRIVSNEEDED(client->getNickname(), chanName));
 		return;
 	}
 	if (client->getChannelsMap().find(chanName) == client->getChannelsMap().end())

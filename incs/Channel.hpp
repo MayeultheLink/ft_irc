@@ -6,7 +6,7 @@
 /*   By: mde-la-s <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/12 15:16:58 by mde-la-s          #+#    #+#             */
-/*   Updated: 2023/05/18 19:26:56 by mde-la-s         ###   ########.fr       */
+/*   Updated: 2023/05/19 15:11:11 by mde-la-s         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,67 +20,6 @@ class Channel;
 
 class Channel
 {
-	public:
-
-		Channel(const std::string &name, const std::string &key, ClientInfo *admin);
-		~Channel();
-
-		// GETTERS
-		const std::string&				getName() const;
-		const std::string&				getKey() const;
-//		Client	 					*getAdmin();
-		size_t						getNbClient() const;
-		const size_t&					getMaxClient() const;
-		const std::string&				getTopic() const;
-//		size_t						getNboperators() const; //ok
-//		std::vector<Client *>		getOperators() const;
-//		std::string					getNicknamesList();
-//		std::vector<std::string>	getNicknames();
-//		std::vector<std::string>	getNicknamesOpe(); //en cours ??? pas certaines de ce que je fais
-//		std::vector<std::string>	getNicknamesClients(); //en cours ??? pas certaines de ce que je fais
-//		std::string					getModes() const;
-//		std::string					getTopic() const;
-//		std::vector<Client *>		getClients() const;
-		bool				getIMode() const;
-		bool				getKMode() const;
-		bool				getLMode() const;
-		bool				getTMode() const;
-//
-		std::vector<ClientInfo *>&	getClients();
-		std::vector<ClientInfo *>&	getOperators();
-		std::vector<ClientInfo *>&	getInvited();
-
-		// SETTERS
-		void			setKey(const std::string & key);
-		void			setMaxClient(const size_t & maxClient);
-		void			setTopic(const std::string& topic);
-//		void			setNbclients(const size_t nbclients);
-//		void			setNboperators(const size_t nboperators); //ok
-//		void			setModes(const std::string &modes);
-//		void			setTopic(const std::string &topic);
-		void			setIMode(bool mode);
-		void			setKMode(bool mode);
-		void			setLMode(bool mode);
-		void			setTMode(bool mode);
-	
-		// FCT MEMBRES
-		void			addClient(ClientInfo *client);
-		void			removeClient(const ClientInfo *client);
-
-		void			removeOperator(const ClientInfo* client);
-
-//		void			removeOperator(Client *operators); //ok à tester +ajout quand -o à faire
-//		bool			client_is_operator(Client *client); //à faire puis tester;
-//		bool			client_is_inchannel(Client *client); // àtester
-		
-		void			setAllToInvited(void);
-		void			sendAll(const std::string& message);
-		void			sendAll(const std::string& message, ClientInfo *exclude);
-
-		bool			isOperator(const ClientInfo* client) const;
-		bool			isInvited(const ClientInfo* client) const;
-
-//		void			consolDeBUGchannel();
 
 	private: 
 
@@ -98,6 +37,45 @@ class Channel
 		bool				_lMode;
 		bool				_tMode;
 		
+	public:
+
+		Channel(const std::string &name, const std::string &key, ClientInfo *admin);
+		~Channel();
+
+		const std::string&		getName() const;
+		const std::string&		getKey() const;
+		void				setKey(const std::string & key);
+		size_t				getNbClient() const;
+		const size_t&			getMaxClient() const;
+		void				setMaxClient(const size_t & maxClient);
+		const std::string&		getTopic() const;
+		void				setTopic(const std::string& topic);
+		bool				getIMode() const;
+		void				setIMode(bool mode);
+		bool				getKMode() const;
+		void				setKMode(bool mode);
+		bool				getLMode() const;
+		void				setLMode(bool mode);
+		bool				getTMode() const;
+		void				setTMode(bool mode);
+
+		std::vector<ClientInfo *>&	getClients();
+		std::vector<ClientInfo *>&	getOperators();
+		std::vector<ClientInfo *>&	getInvited();
+
+		void				addClient(ClientInfo *client);
+		void				removeClient(const ClientInfo *client);
+
+		void				removeOperator(const ClientInfo* client);
+
+		void				setAllToInvited(void);
+
+		void				sendAll(const std::string& message);
+		void				sendAll(const std::string& message, ClientInfo *exclude);
+
+		bool				isOperator(const ClientInfo* client) const;
+		bool				isInvited(const ClientInfo* client) const;
+
 };
 
 #endif
