@@ -6,7 +6,7 @@
 /*   By: mde-la-s <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/05 17:43:45 by mde-la-s          #+#    #+#             */
-/*   Updated: 2023/05/22 15:44:59 by mde-la-s         ###   ########.fr       */
+/*   Updated: 2023/05/22 17:54:09 by mde-la-s         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,7 @@
 #define ERR_UNKNOWNCOMMAND(source, command)		"421 " + source + " " + command + " :Command unknown"
 #define ERR_NONICKNAMEGIVEN(source, command)		"431 " + source + " " + command + " :No new nickname has been given"
 #define ERR_ERRONEUSNICKNAME(source)			"432 " + source + " :This nickname is Invalid" 
-#define ERR_NICKNAMEINUSE(source)			"433 " + source + " :This nickname is already in use"
+#define ERR_NICKNAMEINUSE(nickname)			"433 " + nickname + " " + nickname + " :Nickname already in use"
 #define ERR_USERNOTINCHANNEL(source, target, channel) 	"441 " + source + " " + target + " " + channel + " :They aren't on that channel"
 #define ERR_NOTONCHANNEL(source, channel)		"442 " + source + " " + channel + " :You're not on that channel"
 #define ERR_NOTREGISTERED(source)			"451 " + source + " : You have not registered"

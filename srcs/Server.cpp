@@ -6,7 +6,7 @@
 /*   By: mde-la-s <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/19 15:50:43 by mde-la-s          #+#    #+#             */
-/*   Updated: 2023/05/22 15:55:40 by mde-la-s         ###   ########.fr       */
+/*   Updated: 2023/05/22 18:21:26 by mde-la-s         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -267,6 +267,16 @@ void Server::clientDisconnect(int fd, int epoll_fd)
 {
 std::cout << "CLIENT DISCONNECT" << std::endl;
 
+	for (std::map<std::string, Channel*>::iterator it = _clientsMap[fd]->getChannelsMap().begin(); it != _clientsMap[fd]->getChannelsMap().end(); it++)
+	{
+		it->second->removeClient(_clientsMap[fd]);
+		if (it->second->getNbClient() == 0)
+		{
+			_channelsMap.erase(it->second->getName());
+			delete it->second;
+		}
+	}
+
 	epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, 0);
 	std::cout << "Client n°" << fd << " va se déconnecter." << std::endl;
 	delete _clientsMap.at(fd);
@@ -398,14 +408,9 @@ std::cout << "COMMAND : NICK" << std::endl;
 		return;
 	}
 
-	for (std::map<int, ClientInfo *>::iterator it = _clientsMap.begin(); it != _clientsMap.end(); it++)
-	{
-		if (nickname == it->second->getNickname())
-				nickname.push_back('_');
-	}
 	if (getClientByNick(nickname))
 	{
-		client->reply(ERR_NICKNAMEINUSE(client->getNickname()));
+		client->sendMsg(ERR_NICKNAMEINUSE(nickname));
 		return;
 	}
 	std::string oldNick = client->getNickname();
@@ -416,19 +421,16 @@ std::cout << "COMMAND : NICK" << std::endl;
 	client->sendMsg(reply);
 	client->sendMsg(RPL_NICK(oldNick, newNick));
 
+	if (!client->getRegistered() && client->getUsername() != "")
+	{
+		client->setRegistered(1);
+		client->reply(RPL_WELCOME(client->getNickname()));
+	}
 }
 
 void Server::CmdUser(ClientInfo *client, std::vector<std::string> arg)
 {
 std::cout << "COMMAND : USER" << std::endl;
-
-		for (std::vector<std::string>::iterator it = arg.begin(); it != arg.end(); ++it)
-		{
-			std::cout << "boucle vector : " << *it << std::endl;
-		}
-
-
-
 
 	int param_size = arg.size();
 
@@ -476,8 +478,11 @@ std::cout << "USER Cmd start var = " << start << std::endl;
 		}
 std::cout << "USER Cmd Realname found = " << realname << std::endl;
 		client->setRealname(realname);
-		client->setRegistered(1);
-		client->reply(RPL_WELCOME(client->getNickname()));
+		if (client->getNickname() != "")
+		{
+			client->setRegistered(1);
+			client->reply(RPL_WELCOME(client->getNickname()));
+		}
 	}
 }
 
@@ -687,8 +692,8 @@ std::cout << "COMMAND : PART" << std::endl;
 
 		if (_channelsMap[*it]->getNbClient() == 0)
 		{
-			delete _channelsMap[*it];
 			_channelsMap.erase(*it);
+			delete _channelsMap[*it];
 		}
 	}
 }
