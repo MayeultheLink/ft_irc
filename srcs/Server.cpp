@@ -169,9 +169,10 @@ std::cout << "ClientInfo n " << event.data.fd << " connected" << std::endl;
 			{
 std::cout << "other fd communication" << std::endl;
 
-				std::string message;
-				int r = getMsgFromFd(events[i].data.fd, &message);
-std::cout << "message received = '" << message << "'" << std::endl;
+				char tmp[100] = {0};
+				int r = recv(events[i].data.fd, tmp, 100, 0);
+				// int r = getMsgFromFd(events[i].data.fd, &message);
+std::cout << "message received = '" << _clientsMap[events[i].data.fd]->getMsg() << "'" << std::endl;
 std::cout << "r = " << r << std::endl;
 				if (r < 0)
 				{
@@ -183,12 +184,15 @@ std::cout << "r = " << r << std::endl;
 					clientDisconnect(events[i].data.fd, epoll_fd);
 					continue;
 				}
-				else
-					execMsg(_clientsMap[events[i].data.fd], message);
+				_clientsMap[events[i].data.fd]->getMsg().append(tmp, r);
+				if (_clientsMap[events[i].data.fd]->getMsg().find("\r\n") == std::string::npos && _clientsMap[events[i].data.fd]->getMsg().find("\n") == std::string::npos)
+					continue;
+				execMsg(_clientsMap[events[i].data.fd], _clientsMap[events[i].data.fd]->getMsg());
+				if (_clientsMap.find(events[i].data.fd) != _clientsMap.end())
+					_clientsMap[events[i].data.fd]->getMsg() = "";
 			}
 		}
-
-		debugPrints();
+		//debugPrints();
 	}
 
 	if (close(epoll_fd))
@@ -196,27 +200,27 @@ std::cout << "r = " << r << std::endl;
 	
 }
 
-size_t getMsgFromFd(int fd, std::string * message)
-{
-	char tmp[100] = {0};
-	int r;
-	while (message->find("\r\n") == std::string::npos && message->find("\n") == std::string::npos)
-	{
-		r = recv(fd, tmp, 100, 0);
-		if (r < 0)
-		{
-			if (errno != EWOULDBLOCK)
-				throw std::runtime_error("Error while receiving message from client.");			
-		}
-		if (r == 0)
-			return r;
+// size_t getMsgFromFd(int fd, std::string * message)
+// {
+// 	char tmp[100] = {0};
+// 	int r;
+// 	while (message->find("\r\n") == std::string::npos && message->find("\n") == std::string::npos)
+// 	{
+// 		r = recv(fd, tmp, 100, 0);
+// 		if (r < 0)
+// 		{
+// 			if (errno != EWOULDBLOCK)
+// 				throw std::runtime_error("Error while receiving message from client.");			
+// 		}
+// 		if (r == 0)
+// 			return r;
 			
-		message->append(tmp, r);
+// 		message->append(tmp, r);
 
-	}
+// 	}
 
-	return r;
-}
+// 	return r;
+// }
 
 void Server::newClientConnect (sockaddr_in connect_sock, int connect_fd)
 {
@@ -226,15 +230,32 @@ void Server::newClientConnect (sockaddr_in connect_sock, int connect_fd)
 
 std::cout << "CLIENT CONNECT: hostname = " << hostname << std::endl;
 
-	ClientInfo *client = new ClientInfo(hostname, connect_fd, ntohs(connect_sock.sin_port));
+	ClientInfo *client = new ClientInfo(hostname, connect_fd, connect_sock);//ntohs(connect_sock.sin_port));
 	std::cout << hostname << ":" << ntohs(connect_sock.sin_port) << " has connected." << std::endl << std::endl;
 	_clientsMap[connect_fd] = client;
 
-	std:: string message;
-	getMsgFromFd(connect_fd, &message);
-std::cout << "message = " << message << std::endl;
+	// std:: string message;
+	// getMsgFromFd(connect_fd, &message);
+	char tmp[100] = {0};
+	int r = recv(connect_fd, tmp, 100, 0);
+	// int r = getMsgFromFd(events[i].data.fd, &message);
+std::cout << "message received = '" << client->getMsg() << "'" << std::endl;
+std::cout << "r = " << r << std::endl;
+	if (r < 0)
+	{
+		perror("Error while receiving data.");
+		return;
+	}
+	else if (r == 0)
+		return;
+	client->getMsg().append(tmp, r);
+	if (client->getMsg().find("\r\n") == std::string::npos && client->getMsg().find("\n") == std::string::npos)
+		return;
+	execMsg(client, client->getMsg());
+	client->getMsg() = "";
+// std::cout << "message = " << message << std::endl;
 
-	execMsg(client, message);
+	// execMsg(client, message);
 
 std::cout << "newco nickname: " << client->getNickname() << std::endl;
 std::cout << "newco username: " << client->getUsername() << std::endl;

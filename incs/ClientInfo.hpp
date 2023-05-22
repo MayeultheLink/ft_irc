@@ -6,7 +6,7 @@
 /*   By: mde-la-s <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/05 15:25:44 by mde-la-s          #+#    #+#             */
-/*   Updated: 2023/05/19 15:32:57 by mde-la-s         ###   ########.fr       */
+/*   Updated: 2023/05/19 17:07:19 by mde-la-s         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,8 @@ class ClientInfo;
 #include <sstream>
 #include <sys/poll.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "Server.hpp"
 #include "Channel.hpp"
@@ -38,10 +40,11 @@ class ClientInfo
 		std::string			_password;
 		bool				_isregistered;
 		std::map<std::string, Channel*>	_channelsMap;
+		std::string			_msg;
 
 	public:
 
-		ClientInfo(const std::string &hostname, int fd, int port);
+		ClientInfo(const std::string &hostname, int fd, sockaddr_in connect_sock);//int port);
 		~ClientInfo();
 
 		const std::string&		getHostname() const;
@@ -58,6 +61,7 @@ class ClientInfo
 		const bool&			getRegistered() const;
 		void				setRegistered(const bool &isregistered);
 		const std::string		getPrefix() const;
+		std::string&			getMsg();
 
 		std::map<std::string, Channel*> &getChannelsMap();
 

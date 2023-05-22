@@ -6,7 +6,7 @@
 /*   By: mde-la-s <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/05 17:43:45 by mde-la-s          #+#    #+#             */
-/*   Updated: 2023/05/19 15:57:52 by mde-la-s         ###   ########.fr       */
+/*   Updated: 2023/05/19 18:54:53 by mde-la-s         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,6 +37,7 @@
 #define RPL_NOTOPIC(source, channel)	        	"331 " + source + " " + channel + " :No topic is set"
 #define RPL_TOPIC(source, channel, topic)	        "332 " + source + " " + channel + " " + topic
 #define RPL_INVITING(source, nickname, channel)		"341 " + source + " " + nickname + " " + channel
+#define RPL_NAMREPLY(source, channel, nickname, prefix)	"353 " + source + " = " + channel + " :" + prefix + nickname + "{ "
 #define RPL_JOIN(source, channel)	    		":" + source + " JOIN :" + channel	
 #define RPL_PING(source, command)		    	":" + source + " PONG :" + command
 #define RPL_PRIVMSG(source, target, message)    	":" + source + " PRIVMSG " + target + " :" + message
