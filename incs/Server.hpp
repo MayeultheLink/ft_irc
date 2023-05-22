@@ -6,7 +6,7 @@
 /*   By: mde-la-s <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/19 15:43:43 by mde-la-s          #+#    #+#             */
-/*   Updated: 2023/05/19 15:47:25 by mde-la-s         ###   ########.fr       */
+/*   Updated: 2023/05/22 15:34:20 by mde-la-s         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,6 +75,7 @@ class Server {
 		void CmdJoin(ClientInfo *client, std::vector<std::string> arg);
 		void CmdPrivmsg(ClientInfo *client, std::vector<std::string> arg);
 		void CmdNotice(ClientInfo *client, std::vector<std::string> arg);
+		void CmdWho(ClientInfo *client, std::vector<std::string> arg);
 		void CmdPart(ClientInfo *client, std::vector<std::string> arg);
 		void CmdKick(ClientInfo *client, std::vector<std::string> arg);
 		void CmdInvite(ClientInfo *client, std::vector<std::string> arg);

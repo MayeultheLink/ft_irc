@@ -6,7 +6,7 @@
 /*   By: mde-la-s <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/19 15:50:43 by mde-la-s          #+#    #+#             */
-/*   Updated: 2023/05/19 15:56:50 by mde-la-s         ###   ########.fr       */
+/*   Updated: 2023/05/22 15:55:40 by mde-la-s         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,7 @@ Server::Server( const std::string & port, const std::string & password ) : _port
 	_cmdsMap["JOIN"] = & Server::CmdJoin;
 	_cmdsMap["PRIVMSG"] = & Server::CmdPrivmsg;
 	_cmdsMap["NOTICE"] = & Server::CmdNotice;
+	_cmdsMap["WHO"] = & Server::CmdWho;
 	_cmdsMap["PART"] = & Server::CmdPart;
 	_cmdsMap["KICK"] = & Server::CmdKick;
 	_cmdsMap["INVITE"] = & Server::CmdInvite;
@@ -135,17 +136,17 @@ std::cout << "START\n";
 	
 	while (running) 
 	{
-std::cout << "entering running loop\n" << std::endl;
+//std::cout << "entering running loop\n" << std::endl;
 		event_count = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
 		if (!running)
 			break;
-std::cout << "passed epoll_wait and event_count = " << event_count << std::endl;
+//std::cout << "passed epoll_wait and event_count = " << event_count << std::endl;
 		for (int i = 0; i < event_count; i++)
 		{
-std::cout << "entering for loop\n" << std::endl;
+//std::cout << "entering for loop\n" << std::endl;
 			if (events[i].data.fd == _sockfd)
 			{
-std::cout << "new client trying to connect\n" << std::endl;
+//std::cout << "new client trying to connect\n" << std::endl;
 				int connect_fd;
 				sockaddr_in connect_sock = {AF_INET, 0, {0}, {0}};
 				socklen_t size = sizeof connect_sock;
@@ -167,13 +168,13 @@ std::cout << "ClientInfo n " << event.data.fd << " connected" << std::endl;
 			}
 			else
 			{
-std::cout << "other fd communication" << std::endl;
+//std::cout << "other fd communication" << std::endl;
 
 				char tmp[100] = {0};
 				int r = recv(events[i].data.fd, tmp, 100, 0);
 				// int r = getMsgFromFd(events[i].data.fd, &message);
-std::cout << "message received = '" << _clientsMap[events[i].data.fd]->getMsg() << "'" << std::endl;
-std::cout << "r = " << r << std::endl;
+//std::cout << "message received = '" << _clientsMap[events[i].data.fd]->getMsg() << "'" << std::endl;
+//std::cout << "r = " << r << std::endl;
 				if (r < 0)
 				{
 					perror("Error while receiving data.");
@@ -526,6 +527,20 @@ std::cout << "COMMAND : JOIN" << std::endl;
 	{
 		createChannel(arg[0], arg[1], client);
 		client->getChannelsMap()[arg[0]] = _channelsMap[arg[0]];
+		std::string users;
+		for (std::vector<ClientInfo *>::const_iterator it = _channelsMap[arg[0]]->getClients().begin(); it != _channelsMap[arg[0]]->getClients().end(); ++it) 
+		{
+			if (_channelsMap[arg[0]]->isOperator(*it))
+				users += "@";
+			users += (*it)->getNickname() + " ";
+		}
+		client->reply(RPL_NAMREPLY(client->getNickname(), arg[0], users));
+		client->reply(RPL_ENDOFNAMES(client->getNickname(), arg[0]));
+		_channelsMap[arg[0]]->sendAll(RPL_JOIN(client->getPrefix(), arg[0]));
+		if (_channelsMap[arg[0]]->getTopic() == "")
+			client->reply(RPL_NOTOPIC(client->getNickname(), arg[0]));
+		else
+			client->reply(RPL_TOPIC(client->getPrefix(), arg[0], _channelsMap[arg[0]]->getTopic()));
 		return;
 	}
 	if (client->getChannelsMap().find(arg[0]) != client->getChannelsMap().end())
@@ -537,7 +552,7 @@ std::cout << "COMMAND : JOIN" << std::endl;
 	}
 	if (_channelsMap[arg[0]]->getKMode() && arg[1] != _channelsMap[arg[0]]->getKey())
 	{
-		client->reply(ERR_PASSWDMISMATCH(client->getNickname()));
+		client->reply(ERR_BADCHANNELKEY(client->getNickname(), arg[0]));
 		return;
 	}
 	if (_channelsMap[arg[0]]->getLMode() && _channelsMap[arg[0]]->getNbClient() >= _channelsMap[arg[0]]->getMaxClient())
@@ -547,7 +562,21 @@ std::cout << "COMMAND : JOIN" << std::endl;
 	}
 	_channelsMap[arg[0]]->addClient(client);
 	client->getChannelsMap()[arg[0]] = _channelsMap[arg[0]];
-	client->reply(RPL_TOPIC(client->getPrefix(), arg[0], _channelsMap[arg[0]]->getTopic()));
+
+	std::string users;
+	for (std::vector<ClientInfo *>::const_iterator it = _channelsMap[arg[0]]->getClients().begin(); it != _channelsMap[arg[0]]->getClients().end(); ++it) 
+	{
+		if (_channelsMap[arg[0]]->isOperator(*it))
+			users += "@";
+		users += (*it)->getNickname() + " ";
+	}
+	client->reply(RPL_NAMREPLY(client->getNickname(), arg[0], users));
+	client->reply(RPL_ENDOFNAMES(client->getNickname(), arg[0]));
+	_channelsMap[arg[0]]->sendAll(RPL_JOIN(client->getPrefix(), arg[0]));
+	if (_channelsMap[arg[0]]->getTopic() == "")
+		client->reply(RPL_NOTOPIC(client->getNickname(), arg[0]));
+	else
+		client->reply(RPL_TOPIC(client->getPrefix(), arg[0], _channelsMap[arg[0]]->getTopic()));
 }
 
 void Server::CmdPrivmsg(ClientInfo *client, std::vector<std::string> arg)
@@ -610,6 +639,13 @@ std::cout << "COMMAND : NOTICE" << std::endl;
 	}
 	else if (getClientByNick(target))
 		getClientByNick(target)->sendMsg(RPL_NOTICE(client->getPrefix(), target, message));
+}
+
+void Server::CmdWho(ClientInfo *client, std::vector<std::string> arg)
+{
+std::cout << "COMMAND : WHO" << std::endl;
+	if (arg.size())
+		client->reply(RPL_ENDOFWHO(client->getPrefix(), arg[0]));
 }
 
 void Server::CmdPart(ClientInfo *client, std::vector<std::string> arg)
@@ -799,13 +835,34 @@ void Server::CmdMode(ClientInfo *client, std::vector<std::string> arg)
 {
 std::cout << "COMMAND : MODE" << std::endl;
 
-	if (arg.size() < 2)
+	if (arg.size() < 1)
 	{
 		client->reply(ERR_NEEDMOREPARAMS(client->getNickname(), "Mode"));
 		return;
 	}
 	std::string chanName = arg[0];
+	if (arg.size() == 1)
+	{
+		if (_channelsMap.find(chanName) == _channelsMap.end())
+		{
+			client->reply(ERR_NOSUCHCHANNEL(client->getNickname(), chanName));
+			return;
+		}
+		std::string modes = "";
+		if (_channelsMap[chanName]->getIMode())
+			modes += "i";
+		if (_channelsMap[chanName]->getKMode())
+			modes += "k";
+		if (_channelsMap[chanName]->getLMode())
+			modes += "l";
+		if (_channelsMap[chanName]->getTMode())
+			modes += "t";
+		client->reply(RPL_CHANNELMODEIS(client->getPrefix(), chanName, modes, ""));
+		return;
+	}
 	std::string modechar = arg[1];
+	if (modechar[1] == 'i' && chanName == client->getNickname())
+		return;
 	if ((modechar[0] != '+' && modechar[0] != '-') || modechar.size() != 2)
 	{
 		client->reply("/mode <channel> [[+|-]modechar [parameter]]");
@@ -894,4 +951,6 @@ std::cout << "COMMAND : MODE" << std::endl;
 		else if (modechar[0] == '-')
 			_channelsMap[chanName]->setTMode(false);
 	}
+	else
+		client->reply(ERR_UNKNOWNMODE(client->getPrefix(), modechar[1]));
 }
