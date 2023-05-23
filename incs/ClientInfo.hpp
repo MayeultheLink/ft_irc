@@ -6,7 +6,7 @@
 /*   By: mde-la-s <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/05 15:25:44 by mde-la-s          #+#    #+#             */
-/*   Updated: 2023/05/19 17:07:19 by mde-la-s         ###   ########.fr       */
+/*   Updated: 2023/05/23 15:44:28 by mde-la-s         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,7 +44,7 @@ class ClientInfo
 
 	public:
 
-		ClientInfo(const std::string &hostname, int fd, sockaddr_in connect_sock);//int port);
+		ClientInfo(const std::string &hostname, int fd, sockaddr_in connect_sock);
 		~ClientInfo();
 
 		const std::string&		getHostname() const;

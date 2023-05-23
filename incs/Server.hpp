@@ -6,7 +6,7 @@
 /*   By: mde-la-s <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/19 15:43:43 by mde-la-s          #+#    #+#             */
-/*   Updated: 2023/05/22 15:34:20 by mde-la-s         ###   ########.fr       */
+/*   Updated: 2023/05/23 15:46:12 by mde-la-s         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,8 +41,6 @@ class Server;
 #define MAX_EVENTS 10
 
 extern bool running;
-
-size_t getMsgFromFd(int fd, std::string * message);
 
 class Server {
 
@@ -81,8 +79,6 @@ class Server {
 		void CmdInvite(ClientInfo *client, std::vector<std::string> arg);
 		void CmdTopic(ClientInfo *client, std::vector<std::string> arg);
 		void CmdMode(ClientInfo *client, std::vector<std::string> arg);
-
-void debugPrints();
 
 	public :
 

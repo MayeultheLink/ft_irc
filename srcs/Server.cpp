@@ -6,7 +6,7 @@
 /*   By: mde-la-s <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/19 15:50:43 by mde-la-s          #+#    #+#             */
-/*   Updated: 2023/05/23 15:39:09 by mde-la-s         ###   ########.fr       */
+/*   Updated: 2023/05/23 15:51:53 by mde-la-s         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,29 +53,6 @@ Server::~Server( void )
 	}
 	_channelsMap.clear();
 }
-
-void Server::debugPrints()
-{
-	std::cout << "CHANNELS :\n";
-	for (std::map<std::string, Channel *>::iterator it =  _channelsMap.begin(); it != _channelsMap.end(); it++)
-	{
-		std::cout << it->second->getName() << " : ";
-		for (std::vector<ClientInfo *>::iterator it2 =  it->second->getClients().begin(); it2 != it->second->getClients().end(); it2++)
-		{
-			std::cout << (*it2)->getNickname() << ", ";
-		}
-		std::cout << "end of clients\n";
-		for (std::vector<ClientInfo *>::iterator it2 =  it->second->getOperators().begin(); it2 != it->second->getOperators().end(); it2++)
-		{
-			std::cout << (*it2)->getNickname() << ", ";
-		}
-		std::cout << "end of operators\n";
-		std::cout << std::endl;
-
-	}
-
-}
-
 
 void handleSignal(int sigint)
 {
@@ -136,17 +113,13 @@ std::cout << "START\n";
 	
 	while (running) 
 	{
-std::cout << "entering running loop\n" << std::endl;
 		event_count = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
 		if (!running)
 			break;
-//std::cout << "passed epoll_wait and event_count = " << event_count << std::endl;
 		for (int i = 0; i < event_count; i++)
 		{
-//std::cout << "entering for loop\n" << std::endl;
 			if (events[i].data.fd == _sockfd)
 			{
-//std::cout << "new client trying to connect\n" << std::endl;
 				int connect_fd;
 				sockaddr_in connect_sock = {AF_INET, 0, {0}, {0}};
 				socklen_t size = sizeof connect_sock;
@@ -168,13 +141,9 @@ std::cout << "ClientInfo n " << event.data.fd << " connected" << std::endl;
 			}
 			else
 			{
-//std::cout << "other fd communication" << std::endl;
 
 				char tmp[100] = {0};
 				int r = recv(events[i].data.fd, tmp, 100, 0);
-				// int r = getMsgFromFd(events[i].data.fd, &message);
-//std::cout << "message received = '" << _clientsMap[events[i].data.fd]->getMsg() << "'" << std::endl;
-//std::cout << "r = " << r << std::endl;
 				if (r < 0)
 				{
 					perror("Error while receiving data.");
@@ -193,35 +162,12 @@ std::cout << "ClientInfo n " << event.data.fd << " connected" << std::endl;
 					_clientsMap[events[i].data.fd]->getMsg() = "";
 			}
 		}
-		//debugPrints();
 	}
 
 	if (close(epoll_fd))
 		throw std::runtime_error("Failed to close file descriptor");
 	
 }
-
-// size_t getMsgFromFd(int fd, std::string * message)
-// {
-// 	char tmp[100] = {0};
-// 	int r;
-// 	while (message->find("\r\n") == std::string::npos && message->find("\n") == std::string::npos)
-// 	{
-// 		r = recv(fd, tmp, 100, 0);
-// 		if (r < 0)
-// 		{
-// 			if (errno != EWOULDBLOCK)
-// 				throw std::runtime_error("Error while receiving message from client.");			
-// 		}
-// 		if (r == 0)
-// 			return r;
-			
-// 		message->append(tmp, r);
-
-// 	}
-
-// 	return r;
-// }
 
 void Server::newClientConnect (sockaddr_in connect_sock, int connect_fd)
 {
@@ -231,17 +177,13 @@ void Server::newClientConnect (sockaddr_in connect_sock, int connect_fd)
 
 std::cout << "CLIENT CONNECT: hostname = " << hostname << std::endl;
 
-	ClientInfo *client = new ClientInfo(hostname, connect_fd, connect_sock);//ntohs(connect_sock.sin_port));
+	ClientInfo *client = new ClientInfo(hostname, connect_fd, connect_sock);
 	std::cout << hostname << ":" << ntohs(connect_sock.sin_port) << " has connected." << std::endl << std::endl;
 	_clientsMap[connect_fd] = client;
 
-	// std:: string message;
-	// getMsgFromFd(connect_fd, &message);
 	char tmp[100] = {0};
 	int r = recv(connect_fd, tmp, 100, 0);
-	// int r = getMsgFromFd(events[i].data.fd, &message);
-std::cout << "message received = '" << client->getMsg() << "'" << std::endl;
-std::cout << "r = " << r << std::endl;
+std::cout << "message received = " << client->getMsg();
 	if (r < 0)
 	{
 		perror("Error while receiving data.");
@@ -256,10 +198,6 @@ std::cout << "r = " << r << std::endl;
 	if (_clientsMap.find(connect_fd) != _clientsMap.end())
 	{
 		client->getMsg() = "";
-// std::cout << "message = " << message << std::endl;
-
-	// execMsg(client, message);
-
 std::cout << "newco nickname: " << client->getNickname() << std::endl;
 std::cout << "newco username: " << client->getUsername() << std::endl;
 std::cout << "newco realname: " << client->getRealname() << std::endl;
@@ -281,16 +219,15 @@ std::cout << "CLIENT DISCONNECT" << std::endl;
 	}
 
 	epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, 0);
-	std::cout << "Client n°" << fd << " va se déconnecter." << std::endl;
 	delete _clientsMap.at(fd);
 	_clientsMap.erase(fd);
 	close(fd);
-	std::cout << "Client n°" << fd << " s'est déconnecté." << std::endl;
+std::cout << "Client n°" << fd << " s'est déconnecté." << std::endl;
 }
 
 void Server::execMsg(ClientInfo *client, std::string message)
 {
-std::cout << "EXEC MSG : " << message << std::endl;
+std::cout << "\nEXEC MSG : " << message;
 
 	int fd = client->getFd();
 
@@ -325,7 +262,6 @@ std::cout << "EXEC MSG : " << message << std::endl;
 			client->reply(ERR_UNKNOWNCOMMAND(client->getNickname(), cmd_name));
 		}
 	}
-std::cout << "sort de execMsg" << std::endl;
 }
 
 ClientInfo* Server::getClientByNick(const std::string &nickname)
@@ -474,21 +410,16 @@ std::cout << "COMMAND : USER" << std::endl;
 			message.append(*it);
 		}
 		message.append("\t\n");
-std::cout << message << std::endl;
 		size_t start;
 		size_t end;
 		start = message.find(":");
 		if(message.find(":") == std::string::npos)
-		{
 			realname = arg[2];
-std::cout << "USER Cmd start var = " << start << std::endl;
-		}
 		else
 		{
 			end = message.find_first_of("\t\n", start);
 			realname = message.substr(start + 1, end - start -1);
 		}
-std::cout << "USER Cmd Realname found = " << realname << std::endl;
 		client->setRealname(realname);
 		if (client->getNickname() != "")
 		{
