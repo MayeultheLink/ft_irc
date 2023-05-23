@@ -6,7 +6,7 @@
 /*   By: mde-la-s <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/19 15:50:43 by mde-la-s          #+#    #+#             */
-/*   Updated: 2023/05/23 15:51:53 by mde-la-s         ###   ########.fr       */
+/*   Updated: 2023/05/23 17:29:51 by mde-la-s         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -144,6 +144,7 @@ std::cout << "ClientInfo n " << event.data.fd << " connected" << std::endl;
 
 				char tmp[100] = {0};
 				int r = recv(events[i].data.fd, tmp, 100, 0);
+std::cout << "recv = '" << tmp << "'" << std::endl;
 				if (r < 0)
 				{
 					perror("Error while receiving data.");
@@ -166,6 +167,8 @@ std::cout << "ClientInfo n " << event.data.fd << " connected" << std::endl;
 
 	if (close(epoll_fd))
 		throw std::runtime_error("Failed to close file descriptor");
+	if (close(_sockfd))
+		throw std::runtime_error("Failed to close file descriptor");
 	
 }
 
@@ -183,7 +186,8 @@ std::cout << "CLIENT CONNECT: hostname = " << hostname << std::endl;
 
 	char tmp[100] = {0};
 	int r = recv(connect_fd, tmp, 100, 0);
-std::cout << "message received = " << client->getMsg();
+std::cout << "recv = '" << tmp << "'" << std::endl;
+//std::cout << "message received = " << client->getMsg();
 	if (r < 0)
 	{
 		perror("Error while receiving data.");
@@ -364,9 +368,6 @@ std::cout << "COMMAND : NICK" << std::endl;
 	std::string oldNick = client->getNickname();
 	std::string newNick = nickname;
 	client->setNickname(nickname);
-	reply.append(" changed his nickname to ");
-	reply.append(client->getNickname()); 
-	client->sendMsg(reply);
 	client->sendMsg(RPL_NICK(oldNick, newNick));
 
 	if (!client->getRegistered() && client->getUsername() != "")
@@ -471,6 +472,8 @@ void Server::CmdJoin(ClientInfo *client, std::vector<std::string> arg)
 std::cout << "COMMAND : JOIN" << std::endl;
 	if (arg.size() == 1)
 		arg.push_back("");
+	if (arg[0].size() >= 1 && arg[0][0] != '#')
+		arg[0].insert(0, "#");
 	if (_channelsMap.find(arg[0]) == _channelsMap.end())
 	{
 		createChannel(arg[0], arg[1], client);
