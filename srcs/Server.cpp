@@ -6,7 +6,7 @@
 /*   By: mde-la-s <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/19 15:50:43 by mde-la-s          #+#    #+#             */
-/*   Updated: 2023/05/22 18:21:26 by mde-la-s         ###   ########.fr       */
+/*   Updated: 2023/05/23 15:39:09 by mde-la-s         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -136,7 +136,7 @@ std::cout << "START\n";
 	
 	while (running) 
 	{
-//std::cout << "entering running loop\n" << std::endl;
+std::cout << "entering running loop\n" << std::endl;
 		event_count = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
 		if (!running)
 			break;
@@ -253,7 +253,9 @@ std::cout << "r = " << r << std::endl;
 	if (client->getMsg().find("\r\n") == std::string::npos && client->getMsg().find("\n") == std::string::npos)
 		return;
 	execMsg(client, client->getMsg());
-	client->getMsg() = "";
+	if (_clientsMap.find(connect_fd) != _clientsMap.end())
+	{
+		client->getMsg() = "";
 // std::cout << "message = " << message << std::endl;
 
 	// execMsg(client, message);
@@ -261,6 +263,7 @@ std::cout << "r = " << r << std::endl;
 std::cout << "newco nickname: " << client->getNickname() << std::endl;
 std::cout << "newco username: " << client->getUsername() << std::endl;
 std::cout << "newco realname: " << client->getRealname() << std::endl;
+	}
 }
 
 void Server::clientDisconnect(int fd, int epoll_fd)
@@ -289,10 +292,12 @@ void Server::execMsg(ClientInfo *client, std::string message)
 {
 std::cout << "EXEC MSG : " << message << std::endl;
 
+	int fd = client->getFd();
+
 	std::stringstream	ssMsg(message);
 	std::string			msg_parse;
 
-	while(std::getline(ssMsg, msg_parse))
+	while(_clientsMap.find(fd) != _clientsMap.end() && std::getline(ssMsg, msg_parse))
 	{
 		int len = msg_parse.length();
 		if (msg_parse[len - 1] == '\r')
@@ -320,6 +325,7 @@ std::cout << "EXEC MSG : " << message << std::endl;
 			client->reply(ERR_UNKNOWNCOMMAND(client->getNickname(), cmd_name));
 		}
 	}
+std::cout << "sort de execMsg" << std::endl;
 }
 
 ClientInfo* Server::getClientByNick(const std::string &nickname)
@@ -397,6 +403,12 @@ std::cout << "COMMAND : NICK" << std::endl;
 	if (arg.size() < 1)
 	{
 		client->reply(ERR_NONICKNAMEGIVEN(client->getNickname(), "NICK"));
+		return;
+	}
+	if (client->getPassword() != _password)
+	{
+		client->reply(ERR_PASSWDMISMATCH(client->getNickname()));
+		clientDisconnect(client->getFd(), epoll_fd);
 		return;
 	}
 
@@ -692,8 +704,8 @@ std::cout << "COMMAND : PART" << std::endl;
 
 		if (_channelsMap[*it]->getNbClient() == 0)
 		{
-			_channelsMap.erase(*it);
 			delete _channelsMap[*it];
+			_channelsMap.erase(*it);
 		}
 	}
 }
