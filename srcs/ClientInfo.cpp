@@ -6,7 +6,7 @@
 /*   By: mde-la-s <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/19 15:48:41 by mde-la-s          #+#    #+#             */
-/*   Updated: 2023/05/23 15:53:15 by mde-la-s         ###   ########.fr       */
+/*   Updated: 2023/05/24 14:47:34 by mde-la-s         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,7 +48,7 @@ void ClientInfo::sendMsg(const std::string &message) const
 
 	std::string buffer = message + "\r\n";
 	if (send(_fd, buffer.c_str(), buffer.length(), 0) < 0)
-		throw std::runtime_error("Error while sending message to ClientInfo.");
+		throw std::runtime_error("Error while sending message to client.");
 }
 
 const std::string ClientInfo::getPrefix() const 

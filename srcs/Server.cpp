@@ -6,7 +6,7 @@
 /*   By: mde-la-s <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/19 15:50:43 by mde-la-s          #+#    #+#             */
-/*   Updated: 2023/05/24 14:17:34 by mde-la-s         ###   ########.fr       */
+/*   Updated: 2023/05/24 14:37:34 by mde-la-s         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,7 +74,8 @@ void Server::generate_socket( void )
 	struct sockaddr_in serv_socket = {AF_INET, 0, {0}, {0}};
 	serv_socket.sin_addr.s_addr = htonl(INADDR_ANY);
 	int port = std::strtol(_port.c_str(), NULL, 10);
-	if (port < 0 || port > 65535)
+std::cout << "char port = '" << _port << "', int port = '" << port << "'\n";
+	if (port <= 0 || port > 65535)
 		throw std::invalid_argument("Invalid port number\n");
 	serv_socket.sin_port = htons(port);
 
