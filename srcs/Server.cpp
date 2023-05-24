@@ -6,7 +6,7 @@
 /*   By: mde-la-s <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/19 15:50:43 by mde-la-s          #+#    #+#             */
-/*   Updated: 2023/05/24 14:37:34 by mde-la-s         ###   ########.fr       */
+/*   Updated: 2023/05/24 15:02:37 by mde-la-s         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -562,10 +562,10 @@ std::cout << "COMMAND : PRIVMSG" << std::endl;
 		_channelsMap[target]->sendAll(RPL_PRIVMSG(client->getPrefix(), target, message), client);
 		return;
 	}
-	else if (getClientByNick(target))
-		getClientByNick(target)->sendMsg(RPL_PRIVMSG(client->getPrefix(), target, message));
-	else
+	else if (!getClientByNick(target))
 		client->reply(ERR_NOSUCHNICK(client->getNickname(), target));
+	else
+		getClientByNick(target)->sendMsg(RPL_PRIVMSG(client->getPrefix(), target, message));
 }
 
 void Server::CmdNotice(ClientInfo *client, std::vector<std::string> arg)
