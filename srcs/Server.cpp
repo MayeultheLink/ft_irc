@@ -6,7 +6,7 @@
 /*   By: mde-la-s <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/19 15:50:43 by mde-la-s          #+#    #+#             */
-/*   Updated: 2023/05/23 17:29:51 by mde-la-s         ###   ########.fr       */
+/*   Updated: 2023/05/24 14:17:34 by mde-la-s         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -187,7 +187,6 @@ std::cout << "CLIENT CONNECT: hostname = " << hostname << std::endl;
 	char tmp[100] = {0};
 	int r = recv(connect_fd, tmp, 100, 0);
 std::cout << "recv = '" << tmp << "'" << std::endl;
-//std::cout << "message received = " << client->getMsg();
 	if (r < 0)
 	{
 		perror("Error while receiving data.");
@@ -214,6 +213,7 @@ std::cout << "CLIENT DISCONNECT" << std::endl;
 
 	for (std::map<std::string, Channel*>::iterator it = _clientsMap[fd]->getChannelsMap().begin(); it != _clientsMap[fd]->getChannelsMap().end(); it++)
 	{
+std::cout << "clientDisconnect : Channel " << it->second->getName() << std::endl;
 		it->second->removeClient(_clientsMap[fd]);
 		if (it->second->getNbClient() == 0)
 		{
@@ -682,14 +682,14 @@ std::cout << "COMMAND : KICK" << std::endl;
 			comment = arg[2];
 		ClientInfo*	clientToKick = getClientByNick(*it);
 
-		if (clientToKick->getChannelsMap().find(chanName) == clientToKick->getChannelsMap().end())
+		if (!clientToKick || clientToKick->getChannelsMap().find(chanName) == clientToKick->getChannelsMap().end())
 			client->reply(ERR_USERNOTINCHANNEL(client->getNickname(), (*it), chanName));
 		else
 		{
-			_channelsMap.find(chanName)->second->sendAll(RPL_KICK(client->getPrefix(), chanName, *it, comment));
-			_channelsMap.find(chanName)->second->removeClient(clientToKick);
+			_channelsMap[chanName]->sendAll(RPL_KICK(client->getPrefix(), chanName, *it, comment));
+			_channelsMap[chanName]->removeClient(clientToKick);
 
-			clientToKick->getChannelsMap().erase(*it);
+			clientToKick->getChannelsMap().erase(chanName);
 
 			if (_channelsMap[chanName]->getNbClient() == 0)
 			{
